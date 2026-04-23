@@ -31,17 +31,28 @@
     }
     const parent = el.parentElement;
     if (parent) {
-      const labels = parent.querySelectorAll("label");
-      for (const label of labels) {
-        if (label.contains(el)) {
-          const text = label.textContent.replace(el.textContent, "").trim();
-          if (text) return text;
-        }
+      // Check for label containing this input
+      const labelInParent = parent.querySelector("label");
+      if (labelInParent) {
+        const text = labelInParent.textContent.replace(el.textContent || "", "").trim();
+        if (text) return text;
       }
-      const prev = parent.querySelector(":scope > label, :scope > span, :scope > p");
-      if (prev) return prev.textContent.trim();
+      // Check for legend
       const legend = parent.querySelector("legend");
       if (legend) return legend.textContent.trim();
+      // Check for span with text
+      const span = parent.querySelector(":scope > span:not(:empty)");
+      if (span) return span.textContent.trim();
+    }
+    // Try previous sibling
+    const prev = el.previousElementSibling;
+    if (prev && prev.tagName === "LABEL") return prev.textContent.trim();
+    if (prev && prev.tagName === "SPAN") return prev.textContent.trim();
+    // Check parent for label
+    const grandparent = el.parentElement?.parentElement;
+    if (grandparent) {
+      const label = grandparent.querySelector("label, legend, .label, [class*='label']");
+      if (label) return label.textContent.trim();
     }
     return "";
   }
@@ -54,17 +65,72 @@
     return "idx:" + idx;
   }
 
-  function extractFields() {
-    const selectors = [
-      'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="image"])',
-      "textarea",
-      "select"
-    ];
-    
+function extractFields() {
     const allEls = [];
-    for (const sel of selectors) {
-      allEls.push(...document.querySelectorAll(sel));
+    
+    // Text inputs
+    const textInputs = 'input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="password"], input[type="url"], input[type="search"], input[type="date"], textarea, input[type="hidden"][name]';
+    allEls.push(...document.querySelectorAll(textInputs));
+    
+    // Selects
+    allEls.push(...document.querySelectorAll('select'));
+    
+    // File inputs (for resume/CV)
+    allEls.push(...document.querySelectorAll('input[type="file"]'));
+
+    const seen = new Set();
+    const fields = [];
+
+    for (let i = 0; i < allEls.length; i++) {
+      const el = allEls[i];
+      if (el.disabled || el.readOnly) continue;
+      if (!isVisible(el)) continue;
+
+      const fieldId = getFieldId(el, i);
+      if (seen.has(fieldId)) continue;
+      seen.add(fieldId);
+
+      const label = getLabelText(el);
+      const type = el.type || el.tagName.toLowerCase();
+
+      let options = [];
+      if (type === "select-one" || type === "select") {
+        options = Array.from(el.options).map(opt => ({
+          value: opt.value || opt.textContent,
+          label: opt.textContent.trim()
+        }));
+      }
+
+      // Check if it's a file input for resume
+      if (type === "file") {
+        const accept = el.getAttribute("accept") || "";
+        const name = (el.name || el.id || "").toLowerCase();
+        if (name.includes("resume") || name.includes("cv") || name.includes("attachment") || accept.includes("pdf")) {
+          fields.push({
+            id: fieldId,
+            name: el.getAttribute("name") || "",
+            label: label || "Resume/CV",
+            type: "file",
+            required: el.required || false,
+            isFileUpload: true
+          });
+          continue;
+        }
+      }
+
+      fields.push({
+        id: fieldId,
+        name: el.getAttribute("name") || "",
+        label: label,
+        type: type,
+        required: el.required || false,
+        options: options
+      });
     }
+
+    console.log("[JAP] Extracted fields:", fields.length);
+    return fields;
+  }
 
     const seen = new Set();
     const fields = [];

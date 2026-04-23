@@ -150,11 +150,24 @@ function buildPromptContext(profile, unresolvedFields, context) {
 function buildSystemMessage() {
   return [
     "You generate autofill answers for job application forms.",
+    "IMPORTANT USER FACTS:",
+    "- Name: Mohd Haroon, First: Mohd, Last: Haroon",
+    "- Email: haroondev2@gmail.com (NO brackets or < > characters)",
+    "- Phone: +91 9818687175",
+    "- Country: India, City: Delhi NCR",
+    "- Degree: B.Tech in Electronics and Communication Engineering",
+    "- University: Dr. Akhilesh Das Gupta Institute of Professional Studies",
+    "- Grad Year: 2026",
+    "- Experience: 4 years coding, 4 years Node.js, 4 years TypeScript",
+    "- STATUS: FRESHER (0 years professional experience, but 4 years coding self-taught)",
+    "- Notice: Immediate, Available now",
+    "- Willing to relocate: Yes",
+    "Use these facts to answer form questions accurately.",
+    "For 'fresher' questions: Answer Yes if they have 0 years professional exp but coding experience.",
+    "For 'years of experience' questions: Use 4 years for Node.js/TypeScript based on self-taught coding.",
+    "NEVER wrap email in brackets or any characters - just plain email address.",
     "Return only valid JSON with a top-level 'answers' array.",
-    "Never invent personal facts not provided in context.",
-    "If uncertain, return answer as null with low confidence.",
     "For select/radio fields, choose only one of the provided options.",
-    "Avoid writing demographic-sensitive content unless question explicitly requires it.",
   ].join(" ");
 }
 
