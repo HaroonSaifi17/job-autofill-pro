@@ -10,41 +10,24 @@ Country: India
 LinkedIn: linkedin.com/in/haroonsaifi17
 Github: github.com/HaroonSaifi17
 Website: haroonsaifi.tech
-Portfolio: portfolio-v4-roan.vercel.app
 Work Authorization: Yes
 Visa Sponsorship: No
-Salary Expectation: Open to discussion
 
-Education
 Degree: B.Tech in Electronics and Communication Engineering
-University: Dr. Akhilesh Das Gupta Institute of Professional Studies (GGSIPU)
+University: Dr. Akhilesh Das Gupta Institute of Professional Studies
 Graduation Year: 2026
 CGPA: 8.0
 
-Experience
+Professional Experience: 0 years
 Coding Experience: 4 years
-Years of TypeScript Experience: 4 years
-Years of JavaScript Experience: 5 years
-Professional Experience: 2 years
-Total Experience: 4 years
+Node.js Years: 4 years
+TypeScript Years: 4 years
+JavaScript Years: 5 years
+AI LLM Years: 1 year
 
-Skills
-Primary Stack: TypeScript, React, Node.js, Next.js
-Frontend: React.js, Next.js, Angular, Astro, Tailwind CSS
-Backend: Node.js, Express, Hono, tRPC, Analog.js, Spring Boot
-Database: MongoDB, PostgreSQL
-Web3: Solidity, Viem, Wagmi, Ethers.js
-Tools: Docker, Git, Nx, Biome, Postman, Figma
-
-Projects
-PrepZone: EdTech assessment platform with Google OAuth
-ReqQuest: Browser-based API client using TypeScript
-Sorting Visualizer: Algorithm visualizer with 7 sorting methods
-
-Achievements
-Top 5 Finalist in LiveTheCode 2.0 Hackathon
-1000+ GitHub contributions
-5+ freelance projects delivered
+Skills: TypeScript, React, Node.js, Next.js, Angular, Astro, MongoDB, PostgreSQL
 
 Notice Period: Immediate
-Availability: Currently available
+Availability: Available immediately
+Fresher: Yes
+Relocate to Delhi NCR: Yes
