@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Job Autofill Pro",
-  "version": "2.0.1",
-  "description": "One-click autofill for job applications with confidence scoring",
+  "version": "2.0.2",
+  "description": "One-click autofill for job applications",
   "permissions": [
     "storage",
     "tabs",
@@ -22,23 +22,11 @@
       "matches": ["https://*/*", "http://*/*"],
       "js": ["content-script.js"],
       "css": ["overlay.css"],
-      "run_at": "document_start"
+      "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_title": "Job Autofill Pro",
-    "default_icon": {
-      "16": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3LmluaWNhcmlzbjcuZm9yZQW+UTVkAAAA2ElEQVQ4y6WTvQ3CMBCE7wq6wQgMwQZMwAhsQRIlg9dF8KRI22ej2I6cxDv+M1ICnKf0gO97Hs/3fW8hEFJKYa0VRkhopVgqBRgCjJAKICFUgCq4AHe3x0opWwFK4KOUugJ4x3XOe0KIC6d0gJcn3wDcAdx9D0DhO+B7ADuAu+/h7gAYngO+Azj5vnv4DoDX7wLuDoDh+wHcATB8D7gDYPg+4A6A4YeAOwCGHwLuABh+ALgDYPgB4A6A4YeAOwCGHwLuABh+ALgDYPgB4A6A4YeAOwCGHwLuABh+ALgDYPgB4A6A4YeAOwCGHwLuABh+ALgDYLgBLADaC0p7h2XqAAAAAElFTkSuQmCC"
-    }
-  },
-  "commands": {
-    "toggle-overlay": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+J",
-        "mac": "Command+Shift+J"
-      },
-      "description": "Toggle autofill overlay"
-    }
+    "default_title": "Job Autofill Pro"
   },
   "options_ui": {
     "page": "options/options.html",
