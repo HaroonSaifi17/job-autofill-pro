@@ -6,12 +6,24 @@ const {
 } = require("./text-utils");
 
 function buildQuestionText(field) {
+  const optionsText = Array.isArray(field.options)
+    ? field.options
+        .map((option) => {
+          if (option && typeof option === "object") {
+            return `${option.label || ""} ${option.value || ""}`.trim();
+          }
+          return String(option || "").trim();
+        })
+        .filter(Boolean)
+        .join(" ")
+    : "";
+
   const segments = [
     field.label,
     field.name,
     field.placeholder,
     field.description,
-    Array.isArray(field.options) ? field.options.join(" ") : "",
+    optionsText,
   ];
 
   return segments
@@ -104,7 +116,14 @@ function getRelevantContext(profile, unresolvedFields, chunkLimit = 8, answerLim
 
 function normalizeFieldFingerprint(field) {
   const optionPart = Array.isArray(field.options)
-    ? field.options.map((option) => normalizeText(option)).join("|")
+    ? field.options
+        .map((option) => {
+          if (option && typeof option === "object") {
+            return `${normalizeText(option.label)}:${normalizeText(option.value)}`;
+          }
+          return normalizeText(option);
+        })
+        .join("|")
     : "";
 
   return normalizeText([

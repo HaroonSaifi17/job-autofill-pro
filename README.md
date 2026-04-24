@@ -1,69 +1,89 @@
-# Greenhouse AI Autofill (Firefox + localhost proxy)
+# Greenhouse AI Autofill
 
-This project gives you a Firefox extension that fills Greenhouse job applications using:
+Firefox extension + localhost proxy that fills Greenhouse job applications using deterministic field mapping and AI-generated answers from your profile data. Works with GitHub Copilot Models.
 
-- deterministic field mapping from your local profile data
-- AI for unresolved questions through a localhost proxy
-- GitHub Models model fallback (`openai/gpt-5-mini` -> `openai/gpt-4.1` -> `openai/gpt-4o`)
+## Quick Start
 
-No auto-submit is performed. You review and choose what to apply.
+### 1. Profile Data
 
-## Structure
+Create two files in `profile-data/`:
 
-- `extension/` Firefox WebExtension (MV3)
-- `proxy/` local Node.js server that reads profile files and calls GitHub Models
-- `profile-data/` your personal files (ignored by git)
-
-## 1) Add your personal data files
-
-Create your files directly under `profile-data/`:
-
-- `profile-data/profile.md`
-- `profile-data/answers.txt`
-- `profile-data/resume.pdf`
-
-Use `profile-data/templates/README.md` for sample format.
-
-## 2) Configure token
-
-1. Create a GitHub PAT with `models:read` permission.
-2. Copy `.env.example` to `.env`.
-3. Set your token:
-
-```bash
-GITHUB_TOKEN=ghp_...
-PORT=8787
-HOST=127.0.0.1
+**`profile.v2.json`** - your core facts:
+```json
+{
+  "fullName": "Your Name",
+  "firstName": "Your",
+  "lastName": "Name",
+  "email": "you@example.com",
+  "phone": "+91 9876543210",
+  "linkedInUrl": "https://linkedin.com/in/yourprofile",
+  "githubUrl": "https://github.com/yourprofile",
+  "location": "City, Country",
+  "degree": "B.Tech in CS",
+  "university": "Your University",
+  "graduationYear": "2026",
+  "totalExperience": "0",
+  "technicalSkills": "TypeScript, React, Node.js",
+  "noticePeriod": "Immediate",
+  "workAuthorization": true,
+  "needsSponsorship": false,
+  "willingToRelocate": "Yes"
+}
 ```
 
-## 3) Install dependencies and run proxy
+**`answers.v2.txt`** - Q/A for common screening questions:
+```
+Question: Why are you interested in this role?
+Answer: Your specific answer here.
+
+Question: Are you authorized to work?
+Answer: Yes.
+
+Notice period :: Immediate
+Willing to relocate :: Yes
+```
+
+Also put your resume at `profile-data/resume.pdf`.
+
+### 2. Configure Token
+
+```bash
+cp .env.example .env
+# Set GITHUB_TOKEN=ghp_...
+```
+
+Your token needs `models:read` permission (Copilot Fine-Tuned Models or Models API scope).
+
+### 3. Run
 
 ```bash
 npm install
 npm run start:proxy
 ```
 
-Proxy should start on `http://127.0.0.1:8787`.
+Proxy starts at `http://127.0.0.1:8787`.
 
-## 4) Load extension in Firefox
+### 4. Load Extension
 
-1. Open `about:debugging#/runtime/this-firefox`.
-2. Click **Load Temporary Add-on**.
-3. Select `extension/manifest.json`.
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on**
+3. Select `extension/manifest.json`
 
-## 5) Use it
+### 5. Use
 
-1. Open a Greenhouse job application page.
-2. Click the extension icon.
-3. Click **Scan and Suggest**.
-4. Review each field suggestion.
-5. Click **Apply Suggested**.
+1. Open a Greenhouse job application page
+2. Click the extension icon
+3. Click **Scan** - fields get fetched and resolved
+4. Review suggestions in the overlay
+5. Click **Apply** to fill the form
+6. Click **Resume** / **Cover** to trigger file picker
 
-If you update files in `profile-data/`, open extension settings and click **Reload profile files**.
+If you update profile files, click **Reload Profile** in extension settings.
 
-## Notes
+## How It Works
 
-- The proxy binds to localhost only for safety.
-- Resume file upload fields are usually browser-protected and may require manual selection.
-- Model usage can still be rate-limited by GitHub.
-- Approved answers are saved locally in `proxy/data/answer-memory.json`.
+- **Deterministic resolver** maps fields by label keywords to your profile facts
+- **Answer memory** remembers fields you've manually approved before
+- **AI resolver** generates answers for remaining fields using context from your profile and Q/A bank
+- **15-minute response cache** avoids duplicate AI calls for the same form
+- No auto-submit - you review every suggestion before applying

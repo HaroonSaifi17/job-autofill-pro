@@ -45,11 +45,18 @@ function sanitizeIncomingField(field, index) {
       ? field.options
           .map((option) => {
             if (option && typeof option === "object") {
-              return String(option.label || option.value || "").trim();
+              return {
+                label: String(option.label || option.value || "").trim(),
+                value: String(option.value || option.label || "").trim(),
+              };
             }
-            return String(option || "").trim();
+            const value = String(option || "").trim();
+            return {
+              label: value,
+              value,
+            };
           })
-          .filter(Boolean)
+          .filter((option) => option.label || option.value)
       : [],
   };
 
@@ -315,17 +322,18 @@ async function bootstrap() {
       };
       let aiWarning = null;
 
-      if (deterministic.unresolved.length) {
-        try {
-          aiResult = await resolveWithAi(
-            modelsClient,
-            profile,
-            deterministic.unresolved,
-            retrieval,
-          );
-        } catch (error) {
-          aiWarning = error instanceof Error ? error.message : String(error);
-        }
+        if (deterministic.unresolved.length) {
+          try {
+            aiResult = await resolveWithAi(
+              modelsClient,
+              profile,
+              deterministic.unresolved,
+              retrieval,
+              { url },
+            );
+          } catch (error) {
+            aiWarning = error instanceof Error ? error.message : String(error);
+          }
       }
 
       const suggestions = mergeSuggestions(

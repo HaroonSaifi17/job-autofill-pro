@@ -24,6 +24,34 @@
     return JSON.stringify(value, null, 2);
   }
 
+  function summarizeHealth(payload) {
+    if (!payload || typeof payload !== "object") {
+      return payload;
+    }
+
+    const profile = payload.profile || {};
+    const models = payload.models || {};
+
+    return {
+      ok: payload.ok,
+      service: payload.service,
+      host: payload.host,
+      port: payload.port,
+      profile: {
+        loadedAt: profile.loadedAt,
+        fileCount: profile.fileCount,
+        chunkCount: profile.chunkCount,
+        answerBankCount: profile.answerBankCount,
+      },
+      models: {
+        preferred: models.preferred,
+        catalogSize: models.catalogSize,
+        warning: models.warning || null,
+      },
+      memorySize: payload.memorySize,
+    };
+  }
+
   function setStatus(value) {
     elements.statusOutput.textContent =
       typeof value === "string" ? value : pretty(value);
@@ -67,7 +95,7 @@
   async function checkHealth() {
     setStatus("Checking localhost proxy...");
     const response = await sendMessage({ type: "proxyHealth" });
-    setStatus(response.payload || { ok: true });
+    setStatus(summarizeHealth(response.payload || { ok: true }));
   }
 
   async function reloadProfile() {

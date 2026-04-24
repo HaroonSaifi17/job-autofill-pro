@@ -6,110 +6,214 @@ const {
   toBoolean,
 } = require("./text-utils");
 
-const KEYWORD_GROUPS = {
-  firstName: ["first name", "given name", "forename", "your first", "given"],
-  lastName: ["last name", "family name", "surname", "your last", "family", "surname"],
-  fullName: ["full name", "legal name", "your name", "name", "fullname", "your full"],
-  email: ["email", "e-mail", "email address", "mail id", "your email"],
-  phone: ["phone", "mobile", "telephone", "cell", "contact number", "phone number", "phone"],
-  location: ["location", "where are you based", "current location", "address", "your location", "base location", "locate me"],
-  city: ["city", "town", "current city", "location (city)"],
-  state: ["state", "province", "region"],
-  country: ["country", "nation", "nationality", "country of origin"],
-  linkedInUrl: ["linkedin", "linkedin profile", "linkedin url"],
-  githubUrl: ["github", "github profile", "github url"],
-  websiteUrl: ["website", "portfolio", "personal site"],
-  salaryExpectation: ["salary", "compensation", "expected pay", "expected ctc", "ctc", "expected salary", "expected ctc", "expected"],
-  currentCTC: ["current ctc", "current salary", "current compensation", "present ctc"],
-  needsSponsorship: ["visa sponsorship", "require sponsorship", "sponsorship", "need visa"],
-  coverLetterText: ["cover letter", "cover letter text", "tell us about yourself"],
-  codingExperience: ["coding experience", "programming experience", "development experience", "years of coding", "years of programming"],
-  experienceLevel: ["experience level", "years of experience", "total years", "professional experience", "total experience", "years of professional"],
-  typescriptExperience: ["typescript experience", "typescript", "ts experience", "years of typescript", "typescript exp"],
-  javascriptExperience: ["javascript experience", "javascript", "js experience", "years of javascript"],
-  nodeExperience: ["node.js experience", "nodejs experience", "node experience", "years with node", "node.js", "node js", "years of node"],
-  llmExperience: ["llm experience", "ai experience", "llm apis", "openai experience", "ai apis", "years of ai"],
-  totalExperience: ["total experience", "overall experience"],
-  fresherStatus: ["fresh graduate", "fresher", "recent graduate", "new graduate"],
-  education: ["college", "university", "institute", "institution", "degree", "cgpa", "education", "qualification"],
-  degree: ["degree", "qualification", "highest qualification", "education"],
-  university: ["university", "college name", "institution name"],
-  technicalSkills: ["technical skills", "skills", "programming languages", "tech stack"],
-  resume: ["resume", "cv", "upload resume", "attach resume", "resume/cv", "attach"],
-  coverLetter: ["cover letter", "attach cover letter", "upload cover letter"],
-  noticePeriod: ["notice period", "last working day", "availability", "when can you start", "serve notice", "serving notice"],
-  achievements: ["achievements", "awards", "honors"],
-  projects: ["projects", "portfolio"],
-  aboutYou: ["about yourself", "tell me about yourself", "describe yourself"],
-  strengths: ["strengths", "your strengths"],
-  whyHireYou: ["why should we hire you", "why hire you"],
-  hobbies: ["hobbies", "interests"],
-  currentCompany: ["current company", "current organization", "present company"],
-  graduationYear: ["graduation year", "passing year", "year of graduation"],
-  relocate: ["relocate", "willing to relocate", "relocate to", "relocation"],
-  willingToRelocate: ["willing to relocate", "relocate to delhi", "relocate to ncr", "relocate", "willing to reloc", "are you living in delhi", "relocating"],
-  fresherStatus: ["fresher", "fresh graduate", "new graduate", "recent graduate", "no experience", "0 years", "years of experience"],
-  graduateYear: ["graduation year", "passing year", "year of graduation", "will graduate", "expected to graduate", "completing"],
-};
+const FACT_MATCH_RULES = [
+  {
+    key: "firstName",
+    keywords: ["first name", "given name", "forename", "fname"],
+  },
+  {
+    key: "lastName",
+    keywords: ["last name", "family name", "surname", "lname"],
+  },
+  {
+    key: "fullName",
+    keywords: ["full name", "legal name", "candidate name", "your name"],
+  },
+  {
+    key: "email",
+    keywords: ["email", "e-mail", "email address", "mail id"],
+  },
+  {
+    key: "phone",
+    keywords: ["phone", "mobile", "telephone", "contact number", "phone number"],
+  },
+  {
+    key: "linkedInUrl",
+    keywords: ["linkedin", "linkedin profile", "linkedin url"],
+  },
+  {
+    key: "githubUrl",
+    keywords: ["github", "github profile", "github url"],
+  },
+  {
+    key: "websiteUrl",
+    keywords: ["website", "portfolio", "personal site", "homepage"],
+  },
+  {
+    key: "location",
+    keywords: ["location", "where are you based", "current location", "address"],
+  },
+  {
+    key: "city",
+    keywords: ["city", "town", "current city"],
+  },
+  {
+    key: "state",
+    keywords: ["state", "province", "region"],
+  },
+  {
+    key: "country",
+    keywords: ["country", "nation", "nationality"],
+  },
+  {
+    key: "workAuthorization",
+    keywords: ["authorized to work", "work authorization", "work permit"],
+  },
+  {
+    key: "needsSponsorship",
+    keywords: ["sponsorship", "visa sponsorship", "need sponsorship", "require sponsorship"],
+  },
+  {
+    key: "salaryExpectation",
+    keywords: ["salary expectation", "expected salary", "expected ctc", "compensation"],
+  },
+  {
+    key: "currentCTC",
+    keywords: ["current ctc", "current salary", "current compensation"],
+  },
+  {
+    key: "noticePeriod",
+    keywords: ["notice period", "availability", "when can you start", "start date"],
+  },
+  {
+    key: "willingToRelocate",
+    keywords: ["willing to relocate", "relocate", "relocation"],
+  },
+  {
+    key: "graduationYear",
+    keywords: ["graduation year", "year of graduation", "passing year"],
+  },
+  {
+    key: "degree",
+    keywords: ["degree", "highest qualification", "education level"],
+  },
+  {
+    key: "university",
+    keywords: ["university", "college", "institution"],
+  },
+  {
+    key: "totalExperience",
+    keywords: ["total experience", "overall experience", "years of experience"],
+  },
+  {
+    key: "codingExperience",
+    keywords: ["coding experience", "programming experience", "development experience"],
+  },
+  {
+    key: "typescriptExperience",
+    keywords: ["typescript experience", "years of typescript"],
+  },
+  {
+    key: "javascriptExperience",
+    keywords: ["javascript experience", "years of javascript"],
+  },
+  {
+    key: "nodeExperience",
+    keywords: ["node experience", "node.js experience", "nodejs experience"],
+  },
+  {
+    key: "llmExperience",
+    keywords: ["llm experience", "ai experience", "genai experience"],
+  },
+  {
+    key: "technicalSkills",
+    keywords: ["technical skills", "skills", "tech stack", "programming languages"],
+  },
+  {
+    key: "aboutYou",
+    keywords: ["about yourself", "about you", "bio", "summary"],
+  },
+  {
+    key: "projects",
+    keywords: ["projects", "project highlights"],
+  },
+  {
+    key: "achievements",
+    keywords: ["achievements", "awards", "honors"],
+  },
+  {
+    key: "strengths",
+    keywords: ["strengths", "core strengths"],
+  },
+  {
+    key: "weaknesses",
+    keywords: ["weaknesses"],
+  },
+  {
+    key: "whyHireYou",
+    keywords: ["why should we hire you", "why hire you"],
+  },
+  {
+    key: "hobbies",
+    keywords: ["hobbies", "interests"],
+  },
+  {
+    key: "coverLetterText",
+    keywords: ["cover letter", "motivation", "why this role"],
+  },
+];
 
-function fieldLabel(field) {
-  return [field.label, field.name, field.placeholder, field.description]
+const BOOLEAN_FACT_KEYS = new Set([
+  "workAuthorization",
+  "needsSponsorship",
+]);
+
+function fieldContext(field) {
+  const optionsText = Array.isArray(field.options)
+    ? field.options
+        .map((option) => {
+          if (option && typeof option === "object") {
+            return `${option.label || ""} ${option.value || ""}`;
+          }
+          return String(option || "");
+        })
+        .join(" ")
+    : "";
+
+  return [
+    field.label,
+    field.name,
+    field.placeholder,
+    field.description,
+    optionsText,
+  ]
     .map((entry) => String(entry || "").trim())
     .filter(Boolean)
     .join(" ");
 }
 
-function includesAny(target, patterns) {
-  const normalized = normalizeText(target);
-  return patterns.some((pattern) => normalized.includes(normalizeText(pattern)));
+function includesAny(text, patterns) {
+  const target = normalizeText(text);
+  if (!target) {
+    return false;
+  }
+
+  return patterns.some((pattern) => target.includes(normalizeText(pattern)));
 }
 
-function mapFieldToFact(field) {
-  const target = fieldLabel(field);
+function mapFieldToFactKey(field) {
+  const context = fieldContext(field);
 
-  for (const [factKey, patterns] of Object.entries(KEYWORD_GROUPS)) {
-    if (includesAny(target, patterns)) {
-      return factKey;
+  for (const rule of FACT_MATCH_RULES) {
+    if (includesAny(context, rule.keywords)) {
+      return rule.key;
     }
   }
 
   return null;
 }
 
-function resolveBooleanField(field, factValue) {
-  if (typeof factValue !== "boolean") {
-    return null;
-  }
-
-  const boolAsText = factValue ? "Yes" : "No";
-
-  if (field.type === "checkbox") {
-    return factValue;
-  }
-
-  if (field.type === "radio" || field.type === "select") {
-    const option = chooseOption(boolAsText, field.options);
-    return option;
-  }
-
-  if (field.type === "text" || field.type === "textarea") {
-    return boolAsText;
-  }
-
-  return boolAsText;
-}
-
-function resolveOptionField(field, factValue) {
+function normalizeOptionValue(field, rawValue) {
   if (!Array.isArray(field.options) || !field.options.length) {
     return null;
   }
 
-  const option = chooseOption(factValue, field.options);
+  const option = chooseOption(rawValue, field.options);
   if (option !== null) {
     return option;
   }
 
-  const boolValue = toBoolean(factValue);
+  const boolValue = toBoolean(rawValue);
   if (boolValue !== null) {
     const boolOption = chooseOption(boolValue ? "yes" : "no", field.options);
     if (boolOption !== null) {
@@ -120,7 +224,7 @@ function resolveOptionField(field, factValue) {
   return null;
 }
 
-function normalizeForFieldType(field, value) {
+function normalizeValueForFieldType(field, value) {
   const type = String(field.type || "").toLowerCase();
 
   if (value === null || typeof value === "undefined") {
@@ -128,19 +232,27 @@ function normalizeForFieldType(field, value) {
   }
 
   if (type === "checkbox") {
-    const boolValue = toBoolean(value);
-    if (boolValue === null) {
-      return null;
-    }
-    return boolValue;
+    return toBoolean(value);
   }
 
-  if (type === "select" || type === "radio") {
-    return resolveOptionField(field, value);
+  if (type === "radio" || type === "select") {
+    return normalizeOptionValue(field, value);
   }
 
-  const stringValue = String(value).trim();
-  return stringValue || null;
+  const text = String(value).trim();
+  return text || null;
+}
+
+function confidenceForFact(factKey, normalizedValue) {
+  if (BOOLEAN_FACT_KEYS.has(factKey)) {
+    return 0.93;
+  }
+
+  if (typeof normalizedValue === "string" && normalizedValue.length >= 5) {
+    return 0.9;
+  }
+
+  return 0.88;
 }
 
 function resolveDeterministic(fields, facts, answerMemory) {
@@ -150,54 +262,39 @@ function resolveDeterministic(fields, facts, answerMemory) {
   for (const field of fields) {
     const memoryValue = answerMemory.get(field.fingerprint);
     if (typeof memoryValue !== "undefined") {
-      const normalizedMemory = normalizeForFieldType(field, memoryValue);
+      const normalizedMemory = normalizeValueForFieldType(field, memoryValue);
       if (normalizedMemory !== null) {
         filled.push({
           fieldId: field.id,
           value: normalizedMemory,
-          confidence: 0.96,
+          confidence: 0.97,
           source: "memory",
-          reason: "Matched from your previous approved answer.",
+          reason: "Matched from previous approved answer memory.",
         });
         continue;
       }
     }
 
-    const factKey = mapFieldToFact(field);
+    const factKey = mapFieldToFactKey(field);
     if (!factKey) {
       unresolved.push(field);
       continue;
     }
 
     const factValue = facts[factKey];
-
-    if (factKey === "workAuthorization" || factKey === "needsSponsorship") {
-      const boolResolved = resolveBooleanField(field, factValue);
-      if (boolResolved !== null) {
-        filled.push({
-          fieldId: field.id,
-          value: boolResolved,
-          confidence: 0.92,
-          source: "facts",
-          reason: `Mapped from your ${factKey} profile preference.`,
-        });
-        continue;
-      }
-    }
-
-    const normalizedValue = normalizeForFieldType(field, factValue);
-    if (normalizedValue !== null) {
-      filled.push({
-        fieldId: field.id,
-        value: normalizedValue,
-        confidence: 0.9,
-        source: "facts",
-        reason: `Mapped from your ${factKey} profile data.`,
-      });
+    const normalizedValue = normalizeValueForFieldType(field, factValue);
+    if (normalizedValue === null) {
+      unresolved.push(field);
       continue;
     }
 
-    unresolved.push(field);
+    filled.push({
+      fieldId: field.id,
+      value: normalizedValue,
+      confidence: confidenceForFact(factKey, normalizedValue),
+      source: "facts",
+      reason: `Mapped from profile field: ${factKey}`,
+    });
   }
 
   return {

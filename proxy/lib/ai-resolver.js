@@ -4,7 +4,7 @@ const { chooseOption, clamp } = require("./text-utils");
 const { buildQuestionText } = require("./retrieval");
 
 const RESPONSE_SCHEMA = {
-  name: "greenhouse_field_answers",
+  name: "job_application_answers",
   schema: {
     type: "object",
     additionalProperties: false,
@@ -38,12 +38,13 @@ const RESPONSE_SCHEMA = {
   },
 };
 
-function truncate(value, limit = 500) {
+function truncate(value, max = 700) {
   const text = String(value || "").trim();
-  if (text.length <= limit) {
+  if (text.length <= max) {
     return text;
   }
-  return `${text.slice(0, limit - 3)}...`;
+
+  return `${text.slice(0, max - 3)}...`;
 }
 
 function toAiField(field) {
@@ -55,7 +56,22 @@ function toAiField(field) {
     required: !!field.required,
     placeholder: field.placeholder || "",
     description: field.description || "",
-    options: Array.isArray(field.options) ? field.options.slice(0, 35) : [],
+    options: Array.isArray(field.options)
+      ? field.options.slice(0, 40).map((option) => {
+          if (option && typeof option === "object") {
+            return {
+              label: String(option.label || option.value || ""),
+              value: String(option.value || option.label || ""),
+            };
+          }
+
+          const text = String(option || "");
+          return {
+            label: text,
+            value: text,
+          };
+        })
+      : [],
   };
 }
 
@@ -69,17 +85,14 @@ function sanitizeAiAnswer(field, candidate) {
   }
 
   const confidence = clamp(Number(candidate.confidence || 0), 0, 1);
-
   let answer = candidate.answer;
 
   if (field.type === "checkbox") {
-    if (typeof answer === "boolean") {
-      answer = answer;
-    } else {
-      const asString = String(answer || "").toLowerCase().trim();
-      if (["true", "yes", "1", "checked", "confirm", "acknowledge", "y"].includes(asString)) {
+    if (typeof answer !== "boolean") {
+      const text = String(answer || "").toLowerCase().trim();
+      if (["true", "yes", "1", "checked", "accept", "confirm", "y"].includes(text)) {
         answer = true;
-      } else if (["false", "no", "0", "unchecked", "n"].includes(asString)) {
+      } else if (["false", "no", "0", "unchecked", "n"].includes(text)) {
         answer = false;
       } else {
         return null;
@@ -107,14 +120,12 @@ function sanitizeAiAnswer(field, candidate) {
     value: answer,
     confidence,
     source: "ai",
-    reason: truncate(candidate.reason || "Generated from your profile context."),
+    reason: truncate(candidate.reason || "Generated from profile context and prior answers."),
   };
 }
 
-function buildPromptContext(profile, unresolvedFields, context) {
-  const facts = profile.facts || {};
-
-  const compactFacts = {
+function compactFacts(facts) {
+  return {
     fullName: facts.fullName || "",
     firstName: facts.firstName || "",
     lastName: facts.lastName || "",
@@ -127,49 +138,67 @@ function buildPromptContext(profile, unresolvedFields, context) {
     city: facts.city || "",
     state: facts.state || "",
     country: facts.country || "",
-    salaryExpectation: facts.salaryExpectation || "",
     workAuthorization: typeof facts.workAuthorization === "boolean" ? facts.workAuthorization : null,
     needsSponsorship: typeof facts.needsSponsorship === "boolean" ? facts.needsSponsorship : null,
+    noticePeriod: facts.noticePeriod || "",
+    salaryExpectation: facts.salaryExpectation || "",
+    currentCTC: facts.currentCTC || "",
+    totalExperience: facts.totalExperience || "",
+    codingExperience: facts.codingExperience || "",
+    typescriptExperience: facts.typescriptExperience || "",
+    javascriptExperience: facts.javascriptExperience || "",
+    nodeExperience: facts.nodeExperience || "",
+    llmExperience: facts.llmExperience || "",
+    technicalSkills: facts.technicalSkills || "",
+    degree: facts.degree || "",
+    university: facts.university || "",
+    graduationYear: facts.graduationYear || "",
+    fresherStatus: facts.fresherStatus || "",
+    willingToRelocate: facts.willingToRelocate || "",
+    aboutYou: truncate(facts.aboutYou || "", 1200),
+    projects: truncate(facts.projects || "", 1200),
+    achievements: truncate(facts.achievements || "", 1200),
+    strengths: truncate(facts.strengths || "", 700),
+    weaknesses: truncate(facts.weaknesses || "", 700),
+    whyHireYou: truncate(facts.whyHireYou || "", 700),
+    hobbies: truncate(facts.hobbies || "", 500),
+    coverLetterText: truncate(facts.coverLetterText || "", 2200),
   };
+}
+
+function buildPromptContext(profile, unresolvedFields, context, runtimeContext) {
+  const facts = profile.facts || {};
 
   return {
-    facts: compactFacts,
+    target: {
+      site: "greenhouse",
+      formUrl: runtimeContext && runtimeContext.url ? runtimeContext.url : "",
+    },
+    candidateProfile: compactFacts(facts),
     unresolvedFields: unresolvedFields.map(toAiField),
     contextChunks: (context.chunks || []).map((chunk) => ({
       source: chunk.source,
-      text: truncate(chunk.text, 760),
+      text: truncate(chunk.text, 900),
     })),
     answerBank: (context.answers || []).map((entry) => ({
       source: entry.source,
       question: entry.question,
-      answer: truncate(entry.answer, 760),
+      answer: truncate(entry.answer, 900),
     })),
   };
 }
 
 function buildSystemMessage() {
   return [
-    "You generate autofill answers for job application forms.",
-    "IMPORTANT USER FACTS - USE THESE EXACTLY:",
-    "- Name: Mohd Haroon, First: Mohd, Last: Haroon",
-    "- Email: haroondev2@gmail.com (plain email, NO brackets)",
-    "- Phone: +91 9818687175",
-    "- Country: India, City: Delhi NCR",
-    "- Degree: B.Tech in Electronics and Communication Engineering",
-    "- University: Dr. Akhilesh Das Gupta Institute of Professional Studies",
-    "- Grad Year: 2026",
-    "- Experience: 0 years professional, but 4 years coding self-taught",
-    "- Node.js: 4, TypeScript: 4, JavaScript: 5, AI/LLM: 1",
-    "- STATUS: FRESHER (0 years professional experience)",
-    "- Notice: Immediate",
-    "- Relocate: Yes",
-    "For number fields (years of experience): use NUMBER only like '4' or '0', not '4 years'",
-    "For salary fields: write 'Open' or 'Negotiable' or 'As per company standards' - NEVER write 'to discussion' or 'to be discussed'",
-    "For fresher questions: Answer 'Yes' or 'I am a fresher'",
-    "For fresher questions: Answer 'Yes' or 'I am a fresher'",
-    "NEVER wrap email in brackets - just plain email address.",
-    "Return only valid JSON with 'answers' array.",
-    "For select fields, pick ONE option from provided options.",
+    "You are an autofill assistant for job applications.",
+    "Return strict JSON only, matching the provided schema.",
+    "Use candidate profile facts first. Use answer bank/context chunks as secondary support.",
+    "If confidence is low or information is missing, return answer null with low confidence and a short reason.",
+    "Never invent personal facts.",
+    "For select/radio style fields, choose from provided options only.",
+    "For checkbox fields, output booleans true/false.",
+    "For numeric years fields, prefer plain numeric answers when known.",
+    "Keep answers concise and form-ready.",
   ].join(" ");
 }
 
@@ -177,26 +206,37 @@ function buildUserMessage(payload) {
   return JSON.stringify(payload, null, 2);
 }
 
-async function resolveWithAi(client, profile, unresolvedFields, context) {
-  if (!unresolvedFields.length) {
+function filterByConfidence(items, minConfidence) {
+  const accepted = [];
+  const unresolved = [];
+
+  for (const item of items) {
+    if (!item) {
+      continue;
+    }
+
+    if (item.confidence >= minConfidence) {
+      accepted.push(item);
+    }
+  }
+
+  return { accepted, unresolved };
+}
+
+async function resolveWithAi(client, profile, unresolvedFields, context, runtimeContext) {
+  if (!Array.isArray(unresolvedFields) || !unresolvedFields.length) {
     return {
       filled: [],
+      unresolvedAfterAi: [],
       model: null,
-      errors: [],
+      raw: null,
     };
   }
 
-  const payload = buildPromptContext(profile, unresolvedFields, context);
-
+  const payload = buildPromptContext(profile, unresolvedFields, context, runtimeContext);
   const messages = [
-    {
-      role: "system",
-      content: buildSystemMessage(),
-    },
-    {
-      role: "user",
-      content: buildUserMessage(payload),
-    },
+    { role: "system", content: buildSystemMessage() },
+    { role: "user", content: buildUserMessage(payload) },
   ];
 
   const completion = await client.completeStructured(messages, RESPONSE_SCHEMA);
@@ -204,18 +244,18 @@ async function resolveWithAi(client, profile, unresolvedFields, context) {
     ? completion.parsed.answers
     : [];
 
-  const byFieldId = new Map();
+  const answerByFieldId = new Map();
   for (const answer of rawAnswers) {
     if (answer && answer.fieldId) {
-      byFieldId.set(answer.fieldId, answer);
+      answerByFieldId.set(answer.fieldId, answer);
     }
   }
 
-  const filled = [];
+  const normalizedAnswers = [];
   const unresolvedAfterAi = [];
 
   for (const field of unresolvedFields) {
-    const candidate = byFieldId.get(field.id);
+    const candidate = answerByFieldId.get(field.id);
     const normalized = sanitizeAiAnswer(field, candidate);
 
     if (!normalized) {
@@ -223,21 +263,20 @@ async function resolveWithAi(client, profile, unresolvedFields, context) {
       continue;
     }
 
-    if (normalized.confidence < 0.3) {
-      unresolvedAfterAi.push(field);
-      continue;
-    }
+    normalizedAnswers.push(normalized);
+  }
 
-    if (normalized.confidence < 0.5) {
-      unresolvedAfterAi.push(field);
-      continue;
-    }
+  const { accepted } = filterByConfidence(normalizedAnswers, 0.45);
 
-    filled.push(normalized);
+  const acceptedFieldIds = new Set(accepted.map((item) => item.fieldId));
+  for (const field of unresolvedFields) {
+    if (!acceptedFieldIds.has(field.id)) {
+      unresolvedAfterAi.push(field);
+    }
   }
 
   return {
-    filled,
+    filled: accepted,
     unresolvedAfterAi,
     model: completion.model,
     raw: completion.parsed,

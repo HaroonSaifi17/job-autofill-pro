@@ -5,8 +5,7 @@ node_modules/
 .env.*
 
 profile-data/*
-!profile-data/templates/
-!profile-data/templates/**
+!profile-data/.gitkeep
 
 proxy/data/
 proxy/cache/

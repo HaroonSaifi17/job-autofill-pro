@@ -106,8 +106,8 @@ class GitHubModelsClient {
     const payload = {
       model,
       messages,
-      temperature: 0.2,
-      max_tokens: 1400,
+      temperature: 0,
+      max_tokens: 1800,
       response_format: responseFormat,
     };
 
