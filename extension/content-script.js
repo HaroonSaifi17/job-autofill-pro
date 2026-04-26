@@ -112,7 +112,129 @@
     },
   };
 
-  const ADAPTERS = [GREENHOUSE_ADAPTER, LEVER_ADAPTER];
+  const ASHBY_ADAPTER = {
+    id: "ashby",
+    matches(hostname) {
+      const value = normalizeText(hostname);
+      return value.includes("ashbyhq.com") || value.includes("jobs.ashbyhq");
+    },
+    collectCandidateElements() {
+      const set = new Set();
+
+      const add = (el) => {
+        const normalized = normalizeCandidateElement(el);
+        if (normalized) {
+          set.add(normalized);
+        }
+      };
+
+      queryAll('input:not([type="hidden"]):not([type="file"]), textarea, select').forEach(add);
+      queryAll('[role="combobox"]').forEach(add);
+      queryAll('[class*="select-shell"], [class*="ashby-select"]').forEach(add);
+      queryAll('input[type="radio"]').forEach(add);
+
+      return Array.from(set);
+    },
+    getFileInput(kind) {
+      const candidates = queryAll('input[type="file"]')
+        .filter((entry) => entry instanceof HTMLInputElement);
+
+      if (!candidates.length) {
+        return null;
+      }
+
+      const keywords = kind === "resume" ? ["resume", "cv"] : ["cover", "letter"];
+
+      let best = candidates[0];
+      let bestScore = scoreFileInput(candidates[0], keywords);
+
+      for (const candidate of candidates.slice(1)) {
+        const score = scoreFileInput(candidate, keywords);
+        if (score > bestScore) {
+          best = candidate;
+          bestScore = score;
+        }
+      }
+
+      return best;
+    },
+  };
+
+  const WORKDAY_ADAPTER = {
+    id: "workday",
+    matches(hostname) {
+      const value = normalizeText(hostname);
+      return value.includes("myworkday.com") || value.includes("myworkdayjobs") || value.includes("workday.com");
+    },
+    collectCandidateElements() {
+      const set = new Set();
+
+      queryAll('input:not([type="hidden"]):not([type="file"])').forEach((el) => {
+        if (el instanceof HTMLInputElement && isVisible(el)) {
+          set.add(el);
+        }
+      });
+      queryAll('textarea').forEach((el) => {
+        if (el instanceof HTMLTextAreaElement && isVisible(el)) {
+          set.add(el);
+        }
+      });
+      queryAll('select').forEach((el) => {
+        if (el instanceof HTMLSelectElement && isVisible(el)) {
+          set.add(el);
+        }
+      });
+      
+      queryAll('[data-automation-id*="text"]').forEach((el) => {
+        if (el instanceof HTMLElement && isVisible(el)) {
+          const nested = findWorkdayInput(el);
+          if (nested) set.add(nested);
+        }
+      });
+      queryAll('[data-automation-id="promptInput"]').forEach((el) => {
+        if (el instanceof HTMLElement && isVisible(el)) {
+          set.add(el);
+        }
+      });
+      queryAll('[data-automation-id="input_"]').forEach((el) => {
+        if (el instanceof HTMLElement && isVisible(el)) {
+          set.add(el);
+        }
+      });
+      queryAll('input[type="radio"]').forEach((el) => {
+        if (el instanceof HTMLInputElement && isVisible(el)) {
+          set.add(el);
+        }
+      });
+
+      return Array.from(set);
+    },
+    getFileInput(kind) {
+      const candidates = queryAll('input[type="file"]')
+        .filter((entry) => entry instanceof HTMLInputElement);
+
+      if (!candidates.length) {
+        return null;
+      }
+
+      const keywords = kind === "resume" ? ["resume", "cv"] : ["cover", "letter"];
+
+      let best = candidates[0];
+      let bestScore = scoreFileInput(candidates[0], keywords);
+
+      for (const candidate of candidates.slice(1)) {
+        const score = scoreFileInput(candidate, keywords);
+        if (score > bestScore) {
+          best = candidate;
+          bestScore = score;
+        }
+      }
+
+      return best;
+    },
+  };
+
+  const ADAPTERS = [GREENHOUSE_ADAPTER, LEVER_ADAPTER, ASHBY_ADAPTER, WORKDAY_ADAPTER];
 
   function query(selector, root = document) {
     return root.querySelector(selector);
@@ -407,6 +529,10 @@
       return true;
     }
 
+    if (isWorkdayInput(el)) {
+      return true;
+    }
+
     const parent = el.closest('[class*="select"], [role="combobox"]');
     if (parent) {
       return true;
@@ -465,6 +591,10 @@
     }
 
     if (isComboboxElement(el) || isCustomSelectElement(el)) {
+      return "select";
+    }
+
+    if (isWorkdayInput(el)) {
       return "select";
     }
 
@@ -895,6 +1025,10 @@
   }
 
   function isGreenhouseSelect(el) {
+    return isAshbyOrGreenhouseSelect(el);
+  }
+
+  function isAshbyOrGreenhouseSelect(el) {
     if (!(el instanceof HTMLElement)) {
       return false;
     }
@@ -907,6 +1041,116 @@
     }
 
     if (el.getAttribute('aria-expanded') !== null) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function findAshbySelectContainer(el) {
+    return findGreenhouseSelectContainer(el);
+  }
+
+  function isAshbySelect(el) {
+    return isAshbyOrGreenhouseSelect(el);
+  }
+
+  function isWorkdayInput(el) {
+    if (!(el instanceof HTMLElement)) {
+      return false;
+    }
+
+    const dataId = el.getAttribute("data-automation-id") || "";
+    const className = el.className || "";
+    
+    if (dataId.includes("text") || dataId.includes("promptInput") || dataId.includes("input_")) {
+      return true;
+    }
+
+    if (className.includes("input")) {
+      const parent = el.closest('[data-automation-id]');
+      if (parent) return true;
+    }
+
+    return false;
+  }
+
+  function findWorkdayInput(el) {
+    if (!el) return null;
+    
+    if (el instanceof HTMLInputElement) return el;
+    if (el instanceof HTMLTextAreaElement) return el;
+    if (el instanceof HTMLSelectElement) return el;
+
+    const input = el.querySelector('input:not([type="hidden"])');
+    if (input) return input;
+    
+    const textarea = el.querySelector('textarea');
+    if (textarea) return textarea;
+
+    const select = el.querySelector('select');
+    if (select) return select;
+
+    return el;
+  }
+
+  function findWorkdayDropdownOptions(el) {
+    const options = [];
+    
+    const promptOptions = document.querySelectorAll('[data-automation-id="promptOption"]');
+    promptOptions.forEach((option) => {
+      const label = cleanText(option.textContent || option.getAttribute("data-automation-label") || "");
+      const value = option.getAttribute("data-option-value") || option.getAttribute("data-value") || label;
+      if (label) {
+        options.push({ label, value });
+      }
+    });
+
+    const roleOptions = document.querySelectorAll('[role="option"]');
+    roleOptions.forEach((option) => {
+      const label = cleanText(option.textContent || "");
+      const value = option.getAttribute("data-value") || label;
+      if (label) {
+        options.push({ label, value });
+      }
+    });
+
+    return options;
+  }
+
+  function fillWorkdaySelect(el, value) {
+    const target = normalizeText(value);
+    if (!target) {
+      return false;
+    }
+
+    const options = document.querySelectorAll('[data-automation-id="promptOption"]');
+    for (const option of options) {
+      const optionLabel = normalizeText(option.textContent || option.getAttribute("data-automation-label") || "");
+      if (optionLabel === target || target.includes(optionLabel) || optionLabel.includes(target)) {
+        const roleOption = option.closest('[role="option"]');
+        if (roleOption) {
+          roleOption.click();
+          return true;
+        }
+        option.click();
+        return true;
+      }
+    }
+
+    const roleOptions = document.querySelectorAll('[role="option"]');
+    for (const option of roleOptions) {
+      const optionLabel = normalizeText(option.textContent || "");
+      if (optionLabel === target || target.includes(optionLabel) || optionLabel.includes(target)) {
+        option.click();
+        return true;
+      }
+    }
+
+    const promptInput = el.querySelector('[data-automation-id="promptInput"]');
+    if (promptInput) {
+      syncNativeInputValue(promptInput, value);
+      dispatchInputEvents(promptInput);
       return true;
     }
 
@@ -1127,7 +1371,7 @@
   }
 
   function fillCustomSelect(el, value) {
-    if (isGreenhouseSelect(el)) {
+    if (isGreenhouseSelect(el) || isAshbySelect(el)) {
       const container = findGreenhouseSelectContainer(el);
       if (container) {
         const options = extractGreenhouseSelectOptions(container);
@@ -1155,6 +1399,10 @@
     const className = normalizeText(el.className || "");
     if (className.includes("select") || el.tagName === "SELECT") {
       return fillSelect(el, value);
+    }
+
+    if (isWorkdayInput(el)) {
+      return fillWorkdaySelect(el, value);
     }
 
     return fillCombobox(el, value);

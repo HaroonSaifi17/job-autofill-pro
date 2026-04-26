@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Job Autofill Pro",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "One-click autofill for job applications",
   "permissions": [
     "storage",
