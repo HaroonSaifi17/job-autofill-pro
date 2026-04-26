@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 const express = require("express");
 
 const { AnswerMemory } = require("./lib/answer-memory");
+const { ApplicationHistory, extractJobInfo } = require("./lib/application-history");
 const { resolveWithAi, createQuestionSummary } = require("./lib/ai-resolver");
 const { resolveDeterministic } = require("./lib/deterministic-resolver");
 const { GitHubModelsClient } = require("./lib/github-models-client");
@@ -199,6 +200,9 @@ async function bootstrap() {
   const answerMemory = new AnswerMemory();
   await answerMemory.load();
 
+  const applicationHistory = new ApplicationHistory();
+  await applicationHistory.load();
+
   const profileStore = new ProfileStore();
   await profileStore.reload();
 
@@ -247,6 +251,7 @@ async function bootstrap() {
         answerBankCount: profile.answerBank.length,
       },
       memorySize: answerMemory.entries().length,
+      applicationHistorySize: applicationHistory.size(),
     });
   });
 
@@ -306,6 +311,74 @@ async function bootstrap() {
         files: files.map((f) => f.source),
         resume: resumePath,
         coverLetter: coverPath,
+      });
+    } catch (error) {
+      response.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post("/check-application", async (request, response) => {
+    try {
+      const url = String(request.body?.url || "").trim();
+      const fields = sanitizeFields(request.body?.fields || []);
+
+      if (!url) {
+        response.status(400).json({
+          ok: false,
+          error: "Missing URL.",
+        });
+        return;
+      }
+
+      const existing = applicationHistory.getApplication(url, fields);
+      response.json({
+        ok: true,
+        alreadyApplied: !!existing,
+        application: existing || null,
+      });
+    } catch (error) {
+      response.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post("/record-application", async (request, response) => {
+    try {
+      const url = String(request.body?.url || "").trim();
+      const fields = sanitizeFields(request.body?.fields || []);
+
+      if (!url) {
+        response.status(400).json({
+          ok: false,
+          error: "Missing URL.",
+        });
+        return;
+      }
+
+      await applicationHistory.recordApplication(url, fields);
+      response.json({
+        ok: true,
+        recorded: true,
+        historySize: applicationHistory.size(),
+      });
+    } catch (error) {
+      response.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.get("/application-history", async (_request, response) => {
+    try {
+      response.json({
+        ok: true,
+        applications: applicationHistory.getAll(),
       });
     } catch (error) {
       response.status(500).json({

@@ -123,6 +123,18 @@ async function rememberAnswers(approvals) {
     return callProxy("/profile-files", null, "GET");
   }
 
+  async function checkApplication(fields) {
+    const tab = await getActiveTab();
+    if (!tab?.id) throw new Error("No tab");
+    return callProxy("/check-application", { url: tab.url, fields });
+  }
+
+  async function recordApplication(fields) {
+    const tab = await getActiveTab();
+    if (!tab?.id) throw new Error("No tab");
+    return callProxy("/record-application", { url: tab.url, fields });
+  }
+
   async function applyAll() {
     const tab = await getActiveTab();
     const session = sessionStore.get(tab?.id);
@@ -189,6 +201,18 @@ async function rememberAnswers(approvals) {
 
     if (msg.type === "getProfileFiles") {
       getProfileFiles().then((r) => sendResponse({ ok: true, payload: r }))
+        .catch((e) => sendResponse({ ok: false, error: e.message }));
+      return true;
+    }
+
+    if (msg.type === "checkApplication") {
+      checkApplication(msg.fields).then((r) => sendResponse({ ok: true, payload: r }))
+        .catch((e) => sendResponse({ ok: false, error: e.message }));
+      return true;
+    }
+
+    if (msg.type === "recordApplication") {
+      recordApplication(msg.fields).then((r) => sendResponse({ ok: true, payload: r }))
         .catch((e) => sendResponse({ ok: false, error: e.message }));
       return true;
     }

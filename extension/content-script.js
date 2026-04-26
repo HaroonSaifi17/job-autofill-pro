@@ -13,6 +13,7 @@
     fieldRegistry: new Map(),
     lastFields: [],
     lastSuggestions: [],
+    alreadyApplied: null,
   };
 
   const LEVER_ADAPTER = {
@@ -1372,11 +1373,37 @@
       '  <div id="jap-status" class="jap-status">Ready</div>',
       '  <button id="jap-close" class="jap-btn jap-btn-ghost">✕</button>',
       "</div>",
+      '<div id="jap-warning" class="jap-warning hidden">',
+      '  <span id="jap-warning-text"></span>',
+      '  <button id="jap-force-apply" class="jap-btn jap-btn-warning">Apply Anyway</button>',
+      "</div>",
     ].join("\n");
     document.body.appendChild(overlay);
     query("#jap-fill", overlay).onclick = () => runScan().then(() => runApply());
     query("#jap-close", overlay).onclick = () => overlay.classList.add("hidden");
+    query("#jap-force-apply", overlay).onclick = () => {
+      STATE.alreadyApplied = null;
+      hideDuplicateWarning();
+      runScan().then(() => runApply());
+    };
     return overlay;
+  }
+
+  function showDuplicateWarning(application) {
+    const warning = query("#jap-warning");
+    const warningText = query("#jap-warning-text");
+    if (warning && warningText && application) {
+      const date = new Date(application.appliedAt).toLocaleDateString();
+      warningText.textContent = `Already applied to ${application.company || "this company"} on ${date}`;
+      warning.classList.remove("hidden");
+    }
+  }
+
+  function hideDuplicateWarning() {
+    const warning = query("#jap-warning");
+    if (warning) {
+      warning.classList.add("hidden");
+    }
   }
 
   function setStatus(text) {
@@ -1394,6 +1421,18 @@
         setStatus("No fields found");
         return;
       }
+
+      STATE.lastFields = fields;
+
+      const checkResponse = await ext.runtime.sendMessage({ type: "checkApplication", fields });
+      if (checkResponse?.ok && checkResponse.payload?.alreadyApplied) {
+        STATE.alreadyApplied = checkResponse.payload.application;
+        setStatus("Already applied!");
+        showDuplicateWarning(checkResponse.payload.application);
+        return;
+      }
+
+      STATE.alreadyApplied = null;
       const response = await ext.runtime.sendMessage({ type: "scanAndResolve", fields });
       if (!response || !response.ok) {
         setStatus(`Error: ${response?.error || "failed"}`);
@@ -1410,6 +1449,9 @@
     setStatus("Applying...");
     try {
       const result = applyBatch(STATE.lastSuggestions);
+      if (result.appliedCount > 0 && STATE.lastFields.length > 0) {
+        await ext.runtime.sendMessage({ type: "recordApplication", fields: STATE.lastFields });
+      }
       setStatus(`Applied ${result.appliedCount} fields`);
     } catch (e) {
       setStatus(`Error: ${e?.message || e}`);
