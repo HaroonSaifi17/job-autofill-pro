@@ -4,6 +4,7 @@
   const ext = typeof browser !== "undefined" ? browser : chrome;
 
   const DEFAULT_CONFIG = { proxyBaseUrl: "http://127.0.0.1:8787", confidenceThreshold: 0.6 };
+  const PROXY_TIMEOUT_MS = 50000;
   const sessionStore = new Map();
 
   function clamp(value, min, max) {
@@ -68,7 +69,7 @@
   async function callProxy(endpoint, payload, method = "POST") {
     const cfg = await getConfig();
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 40000);
+    const timeout = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
     const requestInit = {
       method,
       headers: { "Content-Type": "application/json" },
@@ -95,7 +96,7 @@
       return data;
     } catch (error) {
       if (error && error.name === "AbortError") {
-        throw new Error("Proxy request timed out after 40s");
+        throw new Error(`Proxy request timed out after ${Math.round(PROXY_TIMEOUT_MS / 1000)}s`);
       }
       if (error && (error.message.includes("Failed to fetch") || error.message.includes("NetworkError"))) {
         throw new Error(`Proxy not reachable at ${cfg.proxyBaseUrl}. Is the proxy server running?`);

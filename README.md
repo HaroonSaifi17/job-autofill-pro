@@ -1,54 +1,81 @@
-# Applied — Smart Job Application Assistant
+# Applied - Smart Job Application Assistant
 
 ![Applied Logo](extension/logo.svg)
 
-A privacy-first, AI-powered browser extension for one-click job applications.
+Applied is a privacy-first browser extension that helps autofill job application forms using a local proxy with deterministic rules and optional AI.
 
-### Tech Stack
-`JavaScript` `Node.js` `Express` `AI/LLM` `Browser Extensions`
+## Tech Stack
+
+`JavaScript` `Node.js` `Express` `Browser Extension` `AI/LLM`
 
 ## Key Features
 
-- **Structural Matching:** High-accuracy field detection for Greenhouse, Lever, Ashby, and Workday.
-- **Hybrid Resolver:** Fast deterministic matching + advanced AI (GitHub Models) for complex fields.
-- **Local Proxy:** Your sensitive data stays on your machine.
-- **Duplicate Prevention:** Detects prior applications automatically.
-- **Knowledge Memory:** Learns from your previous answers.
+- **Hybrid resolver:** deterministic mapping first, AI only for unresolved fields.
+- **Low-latency caching:** response cache plus in-flight deduplication for repeated clicks.
+- **Answer memory:** remembers approved answers and reuses them on matching fields.
+- **Duplicate application guard:** tracks submitted applications and warns before reapplying.
+- **Local-first architecture:** proxy runs on localhost; profile data stays local.
 
-## Compatibility
-- **Firefox:** Fully supported (Manifest V2).
-- **Chrome:** Supported (Manifest V2, Developer Mode).
+## Browser Support
+
+- **Firefox:** fully supported (Manifest V2).
+- **Chrome/Chromium:** supported in Developer Mode.
+
+## ATS Support Matrix
+
+Coverage below is practical support level based on current adapter + fill strategy in this repository.
+
+| ATS / Site | Support Level | Estimated Autofill Coverage | Notes |
+| --- | --- | --- | --- |
+| Greenhouse | High | ~95% | Best overall extraction and select/radio handling. |
+| Lever | High | ~90% | Strong coverage on common text/select/radio patterns. |
+| Ashby | Medium-High | ~85% | Good coverage, but custom UI variants can differ by company. |
+| Workday | Medium | ~75% | Works on common flows, but Workday DOM variations are broad. |
 
 ## Getting Started
 
-### 1. Prerequisites
+### 1) Prerequisites
+
 - Node.js 18+
-- [GitHub Token](https://github.com/settings/tokens) (Optional, for AI features)
+- [GitHub token](https://github.com/settings/tokens) (optional; required only for AI resolver)
 
-### 2. Setup Proxy
+### 2) Setup Proxy
+
 ```bash
-# Install dependencies
 npm install
-
-# Configure environment
-cp .env.example .env # Add your GITHUB_TOKEN here
-
-# Start the proxy
-npm start
+cp .env.example .env
+# add GITHUB_TOKEN in .env if you want AI resolution
+npm run start:proxy
 ```
 
-### 3. Install Extension
-1. Open your browser's Extensions page.
+### 3) Install Extension
+
+1. Open your browser extensions page.
 2. Enable **Developer Mode**.
-3. Click **Load Unpacked** and select the `extension/` folder.
+3. Click **Load Unpacked** and select `extension/`.
 
-## Profile Configuration
+## Profile Data
 
-Place your resume (`.pdf`) and professional details (`profile.v2.json`) in the `profile-data/` directory.
+Put your structured profile files in `profile-data/`:
+
+- `profile.v2.json` (primary profile facts)
+- `answers.v2.txt` (optional answer bank for long-form responses)
+
+Then reload profile data from the extension UI or call the proxy reload endpoint.
+
+## Performance and Timeouts
+
+- Extension proxy timeout is tuned to **50s** to reduce first-click timeouts on slower models.
+- Proxy caches resolved forms and reuses in-flight work for identical requests.
+
+## Development
+
+Run tests:
+
+```bash
+npm test
+```
 
 ## Privacy
 
-Applied is designed with privacy as a priority. All personal data is stored locally. AI resolution is opt-in and anonymizes data before processing.
-
----
-Built with ❤️ for job seekers.
+Personal data remains local to your machine. AI usage is optional and controlled by your proxy configuration.

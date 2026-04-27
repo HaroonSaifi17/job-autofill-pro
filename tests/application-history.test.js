@@ -3,7 +3,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { normalizeJobUrl } = require("../proxy/lib/application-history");
+const {
+  normalizeJobUrl,
+  extractJobInfo,
+  normalizeJobKey,
+} = require("../proxy/lib/application-history");
 
 test("ApplicationHistory normalizes URLs - same job ID should match", () => {
   // Same job role, different tracking params should match
@@ -26,4 +30,36 @@ test("ApplicationHistory normalizes URLs - different jobs with query params", ()
   const url2 = normalizeJobUrl("https://boards.greenhouse.io/acme/jobs/200?gh_jid=2");
   
   assert.notEqual(url1, url2, "Different job posts should not match even with gh_jid");
+});
+
+test("ApplicationHistory keeps job-identifying query parameters", () => {
+  const normalized = normalizeJobUrl(
+    "https://jobs.example.com/openings/abc?utm_source=linkedin&gh_jid=999&ref=campaign",
+  );
+
+  assert.equal(normalized, "https://jobs.example.com/openings/abc?gh_jid=999");
+});
+
+test("extractJobInfo prefers context over field labels", () => {
+  const info = extractJobInfo(
+    "https://boards.greenhouse.io/acme/jobs/123",
+    [
+      { label: "Company", value: "Fallback Company" },
+      { label: "Position", value: "Fallback Position" },
+    ],
+    { company: "Context Company", title: "Context Title" },
+  );
+
+  assert.equal(info.company, "context company");
+  assert.equal(info.position, "context title");
+});
+
+test("normalizeJobKey changes when role context changes", () => {
+  const url = "https://boards.greenhouse.io/acme/jobs/123";
+  const company = "acme";
+
+  const keyA = normalizeJobKey(url, company, "backend engineer");
+  const keyB = normalizeJobKey(url, company, "frontend engineer");
+
+  assert.notEqual(keyA, keyB);
 });

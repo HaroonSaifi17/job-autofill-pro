@@ -47,8 +47,52 @@ function truncate(value, max = 700) {
   return `${text.slice(0, max - 3)}...`;
 }
 
+function compactObject(source) {
+  if (!source || typeof source !== "object") {
+    return {};
+  }
+
+  const out = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (value === null || typeof value === "undefined") {
+      continue;
+    }
+
+    if (typeof value === "string" && !value.trim()) {
+      continue;
+    }
+
+    if (Array.isArray(value) && !value.length) {
+      continue;
+    }
+
+    out[key] = value;
+  }
+
+  return out;
+}
+
 function toAiField(field) {
-  return {
+  const options = Array.isArray(field.options)
+    ? field.options.slice(0, 40)
+      .map((option) => {
+        if (option && typeof option === "object") {
+          return {
+            label: String(option.label || option.value || ""),
+            value: String(option.value || option.label || ""),
+          };
+        }
+
+        const text = String(option || "");
+        return {
+          label: text,
+          value: text,
+        };
+      })
+      .filter((option) => option.label || option.value)
+    : [];
+
+  return compactObject({
     fieldId: field.id,
     label: field.label || "",
     name: field.name || "",
@@ -56,23 +100,8 @@ function toAiField(field) {
     required: !!field.required,
     placeholder: field.placeholder || "",
     description: field.description || "",
-    options: Array.isArray(field.options)
-      ? field.options.slice(0, 40).map((option) => {
-          if (option && typeof option === "object") {
-            return {
-              label: String(option.label || option.value || ""),
-              value: String(option.value || option.label || ""),
-            };
-          }
-
-          const text = String(option || "");
-          return {
-            label: text,
-            value: text,
-          };
-        })
-      : [],
-  };
+    options,
+  });
 }
 
 function sanitizeAiAnswer(field, candidate) {
@@ -125,7 +154,7 @@ function sanitizeAiAnswer(field, candidate) {
 }
 
 function compactFacts(facts) {
-  return {
+  return compactObject({
     fullName: facts.fullName || "",
     firstName: facts.firstName || "",
     lastName: facts.lastName || "",
@@ -162,7 +191,7 @@ function compactFacts(facts) {
     weaknesses: truncate(facts.weaknesses || "", 700),
     whyHireYou: truncate(facts.whyHireYou || "", 700),
     hobbies: truncate(facts.hobbies || "", 500),
-  };
+  });
 }
 
 function buildPromptContext(profile, unresolvedFields, context, runtimeContext) {
@@ -195,40 +224,35 @@ function buildPromptContext(profile, unresolvedFields, context, runtimeContext) 
     },
     candidateProfile: compactFacts(facts),
     unresolvedFields: unresolvedFields.map(toAiField),
-    contextChunks: (context.chunks || []).map((chunk) => ({
-      source: chunk.source,
-      text: truncate(chunk.text, 900),
-    })),
-    answerBank: (context.answers || []).map((entry) => ({
-      source: entry.source,
-      question: entry.question,
-      answer: truncate(entry.answer, 900),
-    })),
+    contextChunks: (context.chunks || [])
+      .map((chunk) => compactObject({
+        source: chunk.source,
+        text: truncate(chunk.text, 900),
+      }))
+      .filter((chunk) => Object.keys(chunk).length),
+    answerBank: (context.answers || [])
+      .map((entry) => compactObject({
+        source: entry.source,
+        question: entry.question,
+        answer: truncate(entry.answer, 900),
+      }))
+      .filter((entry) => Object.keys(entry).length),
   };
 }
 
 function buildSystemMessage() {
   return [
-    "Role: You are an Elite Technical Recruiter & Career Strategist.",
-    "Objective: Provide perfectly tailored, high-impact job application answers based ONLY on provided facts.",
-    "Rules:",
-    "1. Evidence-Based Answering: For every field, you MUST first identify the most relevant fact in the candidate's profile.",
-    "2. Strict Relevance: NEVER use a fact that doesn't directly answer the question. Example: Do not use 'weaknesses' to answer a 'projects' question. If no relevant fact exists, return answer: null.",
-    "3. Synthesis Requirement: Do not copy-paste. Instead, synthesize a professional 1-3 sentence response that bridges the candidate's experience to the specific company and role.",
-    "4. STAR Method: Mandatory for all behavioral/experience questions.",
-    "5. Action-Impact: Mandatory for project/technical questions.",
-    "6. Tone: Senior-level, professional, and confident. Banned AI-isms: 'thrilled to', 'dynamic landscape', 'passionate about', 'look no further'.",
-    "7. Why Us: Link the candidate's top 1-2 strengths to the specific mission of the target company provided in context.",
-    "Internal Thought Process (Strict):",
-    "- What is the core intent of this question?",
-    "- Which specific fact in the profile evidence-matches this intent?",
-    "- If I use this fact, does it directly answer the question? (If no, stay silent/null).",
-    "Formatting: Return strict JSON only.",
+    "You write strong job-application answers using only provided data.",
+    "Never invent facts. If evidence is missing, return answer null.",
+    "Keep factual fields concise and direct. For behavioral/project prompts, use action + impact in 1-3 sentences.",
+    "For select/radio, pick one valid option value. For checkbox, return boolean.",
+    "Use professional tone and avoid filler phrases.",
+    "Return strict JSON that matches the schema.",
   ].join(" ");
 }
 
 function buildUserMessage(payload) {
-  return JSON.stringify(payload, null, 2);
+  return JSON.stringify(payload);
 }
 
 function filterByConfidence(items, minConfidence) {
@@ -277,23 +301,20 @@ async function resolveWithAi(client, profile, unresolvedFields, context, runtime
   }
 
   const normalizedAnswers = [];
-  const unresolvedAfterAi = [];
 
   for (const field of unresolvedFields) {
     const candidate = answerByFieldId.get(field.id);
     const normalized = sanitizeAiAnswer(field, candidate);
 
-    if (!normalized) {
-      unresolvedAfterAi.push(field);
-      continue;
+    if (normalized) {
+      normalizedAnswers.push(normalized);
     }
-
-    normalizedAnswers.push(normalized);
   }
 
   const { accepted } = filterByConfidence(normalizedAnswers, 0.45);
 
   const acceptedFieldIds = new Set(accepted.map((item) => item.fieldId));
+  const unresolvedAfterAi = [];
   for (const field of unresolvedFields) {
     if (!acceptedFieldIds.has(field.id)) {
       unresolvedAfterAi.push(field);

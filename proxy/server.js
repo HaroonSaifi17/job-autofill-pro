@@ -84,8 +84,104 @@ async function bootstrap() {
   }
 
   const responseCache = new Map();
+  const inflightResolutions = new Map();
   const CACHE_TTL_MS = 1000 * 60 * 15;
   const CACHE_MAX_SIZE = 200;
+
+  function defaultAiResult(unresolvedFields) {
+    return {
+      filled: [],
+      unresolvedAfterAi: Array.isArray(unresolvedFields) ? unresolvedFields : [],
+      model: null,
+    };
+  }
+
+  async function buildResolvePayload(
+    url,
+    fields,
+    context,
+    confidenceThreshold,
+    profile,
+  ) {
+    const startedAt = Date.now();
+    const deterministic = resolveDeterministic(
+      fields,
+      profile.facts,
+      answerMemory,
+    );
+
+    const questionSummaryPromise = Promise.resolve().then(() =>
+      createQuestionSummary(fields),
+    );
+
+    let aiResult = defaultAiResult(deterministic.unresolved);
+    let aiWarning = null;
+
+    if (!modelsClient) {
+      aiWarning = "AI resolver unavailable: GITHUB_TOKEN missing.";
+    } else if (deterministic.unresolved.length) {
+      const retrievalPromise = Promise.resolve().then(() =>
+        getRelevantContext(profile, deterministic.unresolved),
+      );
+
+      try {
+        const retrieval = await retrievalPromise;
+        aiResult = await resolveWithAi(
+          modelsClient,
+          profile,
+          deterministic.unresolved,
+          retrieval,
+          { url, ...context },
+        );
+      } catch (error) {
+        aiWarning = error instanceof Error ? error.message : String(error);
+      }
+    }
+
+    const suggestions = mergeSuggestions(
+      fields,
+      deterministic.filled,
+      aiResult.filled,
+      confidenceThreshold,
+    );
+
+    const unresolvedIds = suggestions
+      .filter((suggestion) => !suggestion.suggested)
+      .map((suggestion) => suggestion.fieldId);
+
+    const questionLookup = new Map(
+      (await questionSummaryPromise).map((item) => [item.fieldId, item.question]),
+    );
+    const unresolvedQuestions = unresolvedIds
+      .map((fieldId) => ({
+        fieldId,
+        question: questionLookup.get(fieldId) || "",
+      }));
+
+    const approvedCount = suggestions.filter(
+      (suggestion) => suggestion.suggested,
+    ).length;
+
+    return {
+      ok: true,
+      cached: false,
+      url,
+      modelUsed: aiResult.model,
+      profileLoadedAt: profile.loadedAt,
+      confidenceThreshold,
+      stats: {
+        totalFields: fields.length,
+        deterministicCount: deterministic.filled.length,
+        aiCount: aiResult.filled.length,
+        approvedCount,
+        unresolvedCount: unresolvedIds.length,
+        elapsedMs: Date.now() - startedAt,
+      },
+      aiWarning,
+      suggestions,
+      unresolvedQuestions,
+    };
+  }
 
   app.get("/health", (_request, response) => {
     const profile = profileStore.getProfile();
@@ -225,7 +321,6 @@ async function bootstrap() {
   });
 
   app.post("/v1/resolve-form", async (request, response) => {
-    const startedAt = Date.now();
     const body = request.body || {};
 
     const url = sanitizeUrl(body.url);
@@ -269,80 +364,31 @@ async function bootstrap() {
     }
 
     try {
-      const deterministic = resolveDeterministic(
-        fields,
-        profile.facts,
-        answerMemory,
-      );
-      const retrieval = getRelevantContext(profile, deterministic.unresolved);
+      let inflight = inflightResolutions.get(cacheKey);
+      if (!inflight) {
+        inflight = buildResolvePayload(
+          url,
+          fields,
+          context,
+          confidenceThreshold,
+          profile,
+        )
+          .then((payload) => {
+            responseCache.set(cacheKey, {
+              cachedAt: Date.now(),
+              payload,
+            });
+            trimCache(responseCache, CACHE_MAX_SIZE);
+            return payload;
+          })
+          .finally(() => {
+            inflightResolutions.delete(cacheKey);
+          });
 
-      let aiResult = {
-        filled: [],
-        unresolvedAfterAi: deterministic.unresolved,
-        model: null,
-      };
-      let aiWarning = null;
-
-      if (!modelsClient) {
-        aiWarning = "AI resolver unavailable: GITHUB_TOKEN missing.";
-      } else if (deterministic.unresolved.length) {
-        try {
-          aiResult = await resolveWithAi(
-            modelsClient,
-            profile,
-            deterministic.unresolved,
-            retrieval,
-            { url, ...context },
-          );
-        } catch (error) {
-          aiWarning = error instanceof Error ? error.message : String(error);
-        }
+        inflightResolutions.set(cacheKey, inflight);
       }
 
-      const suggestions = mergeSuggestions(
-        fields,
-        deterministic.filled,
-        aiResult.filled,
-        confidenceThreshold,
-      );
-
-      const unresolvedIds = suggestions
-        .filter((suggestion) => !suggestion.suggested)
-        .map((suggestion) => suggestion.fieldId);
-
-      const approvedCount = suggestions.filter(
-        (suggestion) => suggestion.suggested,
-      ).length;
-      const elapsedMs = Date.now() - startedAt;
-
-      const payload = {
-        ok: true,
-        cached: false,
-        url,
-        modelUsed: aiResult.model,
-        profileLoadedAt: profile.loadedAt,
-        confidenceThreshold,
-        stats: {
-          totalFields: fields.length,
-          deterministicCount: deterministic.filled.length,
-          aiCount: aiResult.filled.length,
-          approvedCount,
-          unresolvedCount: unresolvedIds.length,
-          elapsedMs,
-        },
-        aiWarning,
-        suggestions,
-        unresolvedQuestions: createQuestionSummary(
-          fields.filter((field) => unresolvedIds.includes(field.id)),
-        ),
-      };
-
-      responseCache.set(cacheKey, {
-        cachedAt: Date.now(),
-        payload,
-      });
-      trimCache(responseCache, CACHE_MAX_SIZE);
-
+      const payload = await inflight;
       response.json(payload);
     } catch (error) {
       response.status(500).json({
