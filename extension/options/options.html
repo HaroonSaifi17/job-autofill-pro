@@ -3,50 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Job Autofill Pro Settings</title>
+  <title>Settings - Job Autofill Pro</title>
   <link rel="stylesheet" href="options.css">
-  <style>
-    .logo { font-size: 32px; margin-bottom: 8px; color: #00d9ff; }
-    .version { font-size: 12px; color: #666; margin-bottom: 16px; }
-  </style>
 </head>
 <body>
   <main class="page">
     <header class="header">
       <div class="logo">Job Autofill Pro</div>
-      <div class="version">v2.0.0 | Firefox Extension</div>
-      <p>One-click autofill with confidence scoring.</p>
+      <div class="version">v2.0.5 — Extension Settings</div>
+      <p>Configure your autofill preferences and proxy connection.</p>
     </header>
 
     <section class="card">
       <h2>Connection</h2>
-      <label class="field">
+      <div class="field">
         <span>Proxy URL</span>
         <input id="proxyUrlInput" type="url" placeholder="http://127.0.0.1:8787">
-      </label>
+      </div>
 
-      <label class="field">
+      <div class="field">
         <span>Confidence Threshold</span>
         <input id="confidenceInput" type="number" min="0.1" max="1" step="0.1" placeholder="0.7">
-        <small style="color:#666;font-size:11px">Lower = more suggestions, Higher = only confident matches</small>
-      </label>
+        <small>Adjust how strict the AI should be when matching fields. Lower values provide more suggestions but may be less accurate.</small>
+      </div>
 
       <div class="buttons">
-        <button id="saveBtn" class="primary">Save</button>
-        <button id="healthBtn" class="secondary">Check Connection</button>
+        <button id="saveBtn" class="primary">Save Changes</button>
+        <button id="healthBtn" class="secondary">Test Connection</button>
         <button id="reloadProfileBtn" class="ghost">Reload Profile</button>
       </div>
     </section>
 
     <section class="card">
-      <h2>Status</h2>
-      <pre id="statusOutput" class="output">Click "Check Connection" to test...</pre>
+      <h2>System Status</h2>
+      <pre id="statusOutput" class="output">Ready...</pre>
     </section>
 
     <section class="card">
-      <h2>Profile Data</h2>
-      <div id="profile-preview" style="font-size:12px;color:#888">
-        Run proxy health check to view profile.
+      <h2>Profile Overview</h2>
+      <div id="profile-preview">
+        <p style="font-size: 14px; color: var(--muted-foreground);">Run a connection test to see your loaded profile data.</p>
       </div>
     </section>
   </main>

@@ -1719,29 +1719,29 @@
       '    <div class="jap-logo-icon">J</div>',
       '    <span class="jap-logo-text">Job Autofill</span>',
       '  </div>',
-      '  <div class="jap-status-container">',
-      '    <div id="jap-status" class="jap-status"><span class="jap-status-dot"></span>Ready</div>',
-      '  </div>',
       '  <button id="jap-close" class="jap-icon-btn" title="Close">✕</button>',
       '</div>',
       '<div class="jap-body">',
+      '  <div class="jap-status-container">',
+      '    <div id="jap-status" class="jap-status">',
+      '      <span class="jap-status-dot"></span>',
+      '      <span>Ready to fill</span>',
+      '    </div>',
+      '  </div>',
       '  <button id="jap-fill" class="jap-btn jap-btn-primary">',
-      '    <span>✨ Fill Form</span>',
+      '    ✨ Fill application',
       '  </button>',
       '</div>',
       '<div id="jap-warning" class="jap-warning hidden">',
       '  <div class="jap-warning-title">',
-      '    <span class="jap-warning-icon">⚠️</span>',
-      '    <span>Duplicate Application</span>',
+      '    <span>⚠️ Duplicate Application</span>',
       '  </div>',
       '  <div id="jap-warning-text" class="jap-warning-text"></div>',
       '  <div id="jap-warning-meta" class="jap-warning-meta"></div>',
-      '  <div class="jap-warning-actions">',
-      '    <button id="jap-force-apply" class="jap-btn jap-btn-danger">Apply Anyway</button>',
-      '  </div>',
+      '  <button id="jap-force-apply" class="jap-btn jap-btn-danger">Apply Anyway</button>',
       '</div>',
       '<div class="jap-footer">',
-      '  <span>Press <span class="jap-shortcut">Ctrl+Shift+F</span> to fill</span>',
+      '  <span><span class="jap-shortcut">Ctrl+Shift+F</span> to quick fill</span>',
       '</div>',
     ].join("\n");
     document.body.appendChild(overlay);
@@ -1814,20 +1814,21 @@
   function setStatus(text, type = "") {
     const statusNode = query("#jap-status");
     if (statusNode) {
-      const dot = statusNode.querySelector(".jap-status-dot") || document.createElement("span");
-      dot.className = "jap-status-dot";
+      const dot = statusNode.querySelector(".jap-status-dot");
+      const textSpan = statusNode.querySelector("span:not(.jap-status-dot)") || document.createElement("span");
+      
       if (type) {
-        dot.classList.add(type);
         statusNode.className = `jap-status ${type}`;
       } else {
         statusNode.className = "jap-status";
       }
-      if (!statusNode.contains(dot)) {
-        statusNode.insertBefore(dot, statusNode.firstChild);
+      
+      if (textSpan) {
+        textSpan.textContent = String(text || "");
+        if (!statusNode.contains(textSpan)) {
+          statusNode.appendChild(textSpan);
+        }
       }
-      statusNode.textContent = "";
-      statusNode.appendChild(dot);
-      statusNode.appendChild(document.createTextNode(String(text || "")));
     }
   }
 

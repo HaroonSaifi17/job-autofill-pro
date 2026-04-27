@@ -1,64 +1,50 @@
 /* ============================================
-   Job Autofill Pro - Modern Overlay UI
+   Job Autofill Pro - Clean Shadcn-inspired UI
    ============================================ */
 
-/* CSS Custom Properties */
-.jap-overlay {
-  --jap-bg-primary: #0f0f23;
-  --jap-bg-secondary: #1a1a2e;
-  --jap-bg-tertiary: #252542;
-  --jap-bg-hover: #2d2d4a;
-  
-  --jap-accent-primary: #6366f1;
-  --jap-accent-hover: #818cf8;
-  --jap-accent-glow: rgba(99, 102, 241, 0.4);
-  
-  --jap-success: #10b981;
-  --jap-warning: #f59e0b;
-  --jap-danger: #ef4444;
-  --jap-danger-bg: rgba(239, 68, 68, 0.15);
-  
-  --jap-text-primary: #f1f5f9;
-  --jap-text-secondary: #94a3b8;
-  --jap-text-muted: #64748b;
-  
-  --jap-border: rgba(255, 255, 255, 0.08);
-  --jap-border-focus: rgba(99, 102, 241, 0.5);
-  
-  --jap-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-  --jap-shadow-glow: 0 0 30px var(--jap-accent-glow);
-  
-  --jap-radius-sm: 6px;
-  --jap-radius-md: 10px;
-  --jap-radius-lg: 14px;
-  
-  --jap-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  
-  position: fixed !important;
-  bottom: 16px !important;
-  right: 16px !important;
-  width: 320px !important;
-  background: var(--jap-bg-primary) !important;
-  border: 1px solid var(--jap-border) !important;
-  border-radius: var(--jap-radius-lg) !important;
-  box-shadow: var(--jap-shadow) !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  font-size: 13px !important;
-  color: var(--jap-text-primary) !important;
-  z-index: 2147483647 !important;
-  overflow: hidden;
-  animation: japSlideUp 0.3s ease-out;
+:root {
+  --jap-bg: #ffffff;
+  --jap-fg: #0f172a;
+  --jap-muted: #64748b;
+  --jap-muted-foreground: #94a3b8;
+  --jap-border: #e2e8f0;
+  --jap-input: #e2e8f0;
+  --jap-primary: #0f172a;
+  --jap-primary-foreground: #ffffff;
+  --jap-secondary: #f1f5f9;
+  --jap-secondary-foreground: #0f172a;
+  --jap-accent: #f1f5f9;
+  --jap-accent-foreground: #0f172a;
+  --jap-destructive: #ef4444;
+  --jap-destructive-foreground: #f8fafc;
+  --jap-ring: #94a3b8;
+  --jap-radius: 0.5rem;
+  --jap-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-@keyframes japSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.jap-overlay {
+  position: fixed !important;
+  bottom: 1rem !important;
+  right: 1rem !important;
+  width: 320px !important;
+  background-color: var(--jap-bg) !important;
+  color: var(--jap-fg) !important;
+  border: 1px solid var(--jap-border) !important;
+  border-radius: var(--jap-radius) !important;
+  box-shadow: var(--jap-shadow) !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  z-index: 2147483647 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  animation: japFadeIn 0.2s ease-out;
+}
+
+@keyframes japFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .jap-overlay.hidden { 
@@ -67,350 +53,243 @@
 
 /* Header */
 .jap-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--jap-bg-secondary) 0%, var(--jap-bg-tertiary) 100%);
-  border-bottom: 1px solid var(--jap-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.jap-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--jap-accent-primary), transparent);
-  opacity: 0.5;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--jap-border) !important;
 }
 
 .jap-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-weight: 600 !important;
 }
 
 .jap-logo-icon {
-  width: 28px;
-  height: 28px;
-  background: linear-gradient(135deg, var(--jap-accent-primary), #a855f7);
-  border-radius: var(--jap-radius-sm);
+  width: 20px;
+  height: 20px;
+  background-color: var(--jap-primary);
+  color: var(--jap-primary-foreground);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  box-shadow: 0 2px 8px var(--jap-accent-glow);
+  font-size: 12px;
 }
 
 .jap-logo-text {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--jap-text-primary);
-  letter-spacing: -0.3px;
 }
 
-/* Buttons */
-.jap-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: var(--jap-radius-md);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--jap-transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.jap-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.jap-btn-primary {
-  background: linear-gradient(135deg, var(--jap-accent-primary), #7c3aed);
-  color: #fff;
-  box-shadow: 0 2px 12px var(--jap-accent-glow);
-}
-
-.jap-btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--jap-accent-hover), #a855f7);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px var(--jap-accent-glow);
-}
-
-.jap-btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.jap-btn-ghost {
-  background: transparent;
-  color: var(--jap-text-secondary);
-  padding: 8px;
-}
-
-.jap-btn-ghost:hover:not(:disabled) {
-  background: var(--jap-bg-hover);
-  color: var(--jap-text-primary);
-}
-
-.jap-btn-danger {
-  background: linear-gradient(135deg, var(--jap-danger), #dc2626);
-  color: #fff;
-}
-
-.jap-btn-danger:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f87171, var(--jap-danger));
-  transform: translateY(-1px);
+/* Body */
+.jap-body {
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
 }
 
 /* Status */
 .jap-status-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 4px !important;
 }
 
 .jap-status {
-  font-size: 12px;
-  color: var(--jap-text-secondary);
-  font-weight: 500;
-  transition: var(--jap-transition);
+  font-size: 12px !important;
+  color: var(--jap-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
-.jap-status.success {
-  color: var(--jap-success);
-}
-
-.jap-status.error {
-  color: var(--jap-danger);
-}
-
-.jap-status.loading {
-  color: var(--jap-accent-primary);
-}
-
-/* Status dots */
 .jap-status-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--jap-text-muted);
-  margin-right: 6px;
-  animation: none;
-}
-
-.jap-status.success .jap-status-dot {
-  background: var(--jap-success);
-  animation: japPulse 2s infinite;
-}
-
-.jap-status.error .jap-status-dot {
-  background: var(--jap-danger);
+  background-color: var(--jap-muted-foreground);
 }
 
 .jap-status.loading .jap-status-dot {
-  background: var(--jap-accent-primary);
-  animation: japPulse 1s infinite;
+  background-color: #3b82f6;
+  animation: japPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.jap-status.success .jap-status-dot {
+  background-color: #10b981;
+}
+
+.jap-status.error .jap-status-dot {
+  background-color: #ef4444;
 }
 
 @keyframes japPulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
 }
 
-/* Warning / Duplicate Alert */
+/* Buttons */
+.jap-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: var(--jap-radius) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  height: 40px !important;
+  padding: 0 16px !important;
+  transition: background-color 0.2s !important;
+  cursor: pointer !important;
+  border: 1px solid transparent !important;
+  width: 100% !important;
+}
+
+.jap-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.jap-btn-primary {
+  background-color: var(--jap-primary) !important;
+  color: var(--jap-primary-foreground) !important;
+}
+
+.jap-btn-primary:hover:not(:disabled) {
+  background-color: #1e293b !important;
+}
+
+.jap-btn-secondary {
+  background-color: var(--jap-secondary) !important;
+  color: var(--jap-secondary-foreground) !important;
+}
+
+.jap-btn-secondary:hover:not(:disabled) {
+  background-color: #e2e8f0 !important;
+}
+
+.jap-btn-outline {
+  background-color: transparent !important;
+  border-color: var(--jap-border) !important;
+  color: var(--jap-fg) !important;
+}
+
+.jap-btn-outline:hover:not(:disabled) {
+  background-color: var(--jap-accent) !important;
+}
+
+.jap-btn-ghost {
+  background-color: transparent !important;
+  color: var(--jap-muted) !important;
+  height: auto !important;
+  padding: 4px !important;
+  width: auto !important;
+}
+
+.jap-btn-ghost:hover:not(:disabled) {
+  background-color: var(--jap-accent) !important;
+  color: var(--jap-fg) !important;
+}
+
+.jap-btn-danger {
+  background-color: var(--jap-destructive) !important;
+  color: var(--jap-destructive-foreground) !important;
+}
+
+.jap-btn-danger:hover:not(:disabled) {
+  background-color: #dc2626 !important;
+}
+
+.jap-icon-btn {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--jap-muted) !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.jap-icon-btn:hover {
+  background-color: var(--jap-accent) !important;
+  color: var(--jap-fg) !important;
+}
+
+/* Warning Section */
 .jap-warning {
-  padding: 14px;
-  background: var(--jap-danger-bg);
-  border-top: 1px solid rgba(239, 68, 68, 0.3);
-  font-size: 12px;
-  color: #fca5a5;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  animation: japFadeIn 0.2s ease-out;
+  padding: 12px 16px !important;
+  background-color: #fef2f2 !important;
+  border-top: 1px solid #fee2e2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
 }
 
-@keyframes japFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.jap-warning.hidden { 
-  display: none !important; 
+.jap-warning.hidden {
+  display: none !important;
 }
 
 .jap-warning-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: var(--jap-danger);
-}
-
-.jap-warning-icon {
-  font-size: 14px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-weight: 600 !important;
+  color: #991b1b !important;
+  font-size: 13px !important;
 }
 
 .jap-warning-text {
-  color: #fecaca;
-  line-height: 1.5;
+  font-size: 12px !important;
+  color: #b91c1c !important;
 }
 
 .jap-warning-meta {
-  color: var(--jap-text-muted);
-  font-size: 11px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-/* Button row in warning */
-.jap-warning-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.jap-warning-actions .jap-btn {
-  flex: 1;
-  padding: 8px 12px;
-  font-size: 12px;
-}
-
-/* Stats bar */
-.jap-stats {
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--jap-bg-secondary);
-  border-top: 1px solid var(--jap-border);
-}
-
-.jap-stat {
-  flex: 1;
-  text-align: center;
-  padding: 8px;
-  background: var(--jap-bg-tertiary);
-  border-radius: var(--jap-radius-sm);
-  transition: var(--jap-transition);
-}
-
-.jap-stat:hover {
-  background: var(--jap-bg-hover);
-}
-
-.jap-stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--jap-text-primary);
-}
-
-.jap-stat-label {
-  font-size: 10px;
-  color: var(--jap-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
+  font-size: 11px !important;
+  color: #7f1d1d !important;
+  opacity: 0.7 !important;
 }
 
 /* Footer */
 .jap-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: var(--jap-bg-secondary);
-  border-top: 1px solid var(--jap-border);
-  font-size: 11px;
-  color: var(--jap-text-muted);
+  padding: 12px 16px !important;
+  border-top: 1px solid var(--jap-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--jap-muted) !important;
+  font-size: 12px !important;
 }
 
-.jap-footer-links {
-  display: flex;
-  gap: 12px;
-}
-
-.jap-footer-link {
-  color: var(--jap-text-secondary);
-  text-decoration: none;
-  transition: var(--jap-transition);
-}
-
-.jap-footer-link:hover {
-  color: var(--jap-accent-primary);
-}
-
-/* Loading spinner */
-.jap-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: japSpin 0.8s linear infinite;
-}
-
-@keyframes japSpin {
-  to { transform: rotate(360deg); }
-}
-
-/* Icon buttons */
-.jap-icon-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--jap-text-secondary);
-  border-radius: var(--jap-radius-sm);
-  cursor: pointer;
-  transition: var(--jap-transition);
-  font-size: 16px;
-}
-
-.jap-icon-btn:hover {
-  background: var(--jap-bg-hover);
-  color: var(--jap-text-primary);
-}
-
-/* Keyboard shortcut hint */
 .jap-shortcut {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  background: var(--jap-bg-tertiary);
+  gap: 2px;
+  padding: 2px 4px;
+  background-color: var(--jap-secondary);
   border: 1px solid var(--jap-border);
   border-radius: 4px;
   font-size: 10px;
-  color: var(--jap-text-muted);
-  font-family: monospace;
+  color: var(--jap-fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  margin: 0 4px;
 }
 
-/* Responsive adjustments */
+/* Custom classes for the JS to use */
+.jap-flex-row { display: flex !important; gap: 8px !important; }
+.jap-flex-1 { flex: 1 !important; }
+
+/* Responsive */
 @media (max-width: 400px) {
   .jap-overlay {
-    width: calc(100vw - 32px) !important;
-    right: 16px !important;
-    left: 16px !important;
-    bottom: 16px !important;
+    width: calc(100vw - 2rem) !important;
+    right: 1rem !important;
+    left: 1rem !important;
   }
 }
