@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Job Autofill Pro",
-  "version": "2.0.3",
-  "description": "One-click autofill for job applications",
+  "version": "2.0.4",
+  "description": "One-click autofill for job applications with privacy-first design",
   "permissions": [
     "storage",
     "tabs",
@@ -15,7 +15,8 @@
     "http://localhost/*"
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -34,7 +35,8 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "job-autofill-pro@local.dev"
+      "id": "job-autofill-pro@haroon.dev",
+      "strict_min_version": "109.0"
     }
   }
 }

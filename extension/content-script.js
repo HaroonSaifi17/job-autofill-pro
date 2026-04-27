@@ -1715,20 +1715,39 @@
     overlay.className = "jap-overlay";
     overlay.innerHTML = [
       '<div class="jap-header">',
-      '  <button id="jap-fill" class="jap-btn jap-btn-primary">Fill</button>',
-      '  <div id="jap-status" class="jap-status">Ready</div>',
-      '  <button id="jap-close" class="jap-btn jap-btn-ghost">✕</button>',
-      "</div>",
+      '  <div class="jap-logo">',
+      '    <div class="jap-logo-icon">J</div>',
+      '    <span class="jap-logo-text">Job Autofill</span>',
+      '  </div>',
+      '  <div class="jap-status-container">',
+      '    <div id="jap-status" class="jap-status"><span class="jap-status-dot"></span>Ready</div>',
+      '  </div>',
+      '  <button id="jap-close" class="jap-icon-btn" title="Close">✕</button>',
+      '</div>',
+      '<div class="jap-body">',
+      '  <button id="jap-fill" class="jap-btn jap-btn-primary">',
+      '    <span>✨ Fill Form</span>',
+      '  </button>',
+      '</div>',
       '<div id="jap-warning" class="jap-warning hidden">',
-      '  <span id="jap-warning-text"></span>',
-      '  <span id="jap-warning-meta" class="jap-warning-meta"></span>',
-      '  <button id="jap-force-apply" class="jap-btn jap-btn-warning">Apply Anyway</button>',
-      "</div>",
+      '  <div class="jap-warning-title">',
+      '    <span class="jap-warning-icon">⚠️</span>',
+      '    <span>Duplicate Application</span>',
+      '  </div>',
+      '  <div id="jap-warning-text" class="jap-warning-text"></div>',
+      '  <div id="jap-warning-meta" class="jap-warning-meta"></div>',
+      '  <div class="jap-warning-actions">',
+      '    <button id="jap-force-apply" class="jap-btn jap-btn-danger">Apply Anyway</button>',
+      '  </div>',
+      '</div>',
+      '<div class="jap-footer">',
+      '  <span>Press <span class="jap-shortcut">Ctrl+Shift+F</span> to fill</span>',
+      '</div>',
     ].join("\n");
     document.body.appendChild(overlay);
     query("#jap-fill", overlay).onclick = async () => {
       if (STATE.isBusy) {
-        setStatus("Busy...");
+        setStatus("Busy...", "loading");
         return;
       }
 
@@ -1745,7 +1764,7 @@
     query("#jap-close", overlay).onclick = () => overlay.classList.add("hidden");
     query("#jap-force-apply", overlay).onclick = async () => {
       if (STATE.isBusy) {
-        setStatus("Busy...");
+        setStatus("Busy...", "loading");
         return;
       }
 
@@ -1792,10 +1811,23 @@
     }
   }
 
-  function setStatus(text) {
+  function setStatus(text, type = "") {
     const statusNode = query("#jap-status");
     if (statusNode) {
-      statusNode.textContent = String(text || "");
+      const dot = statusNode.querySelector(".jap-status-dot") || document.createElement("span");
+      dot.className = "jap-status-dot";
+      if (type) {
+        dot.classList.add(type);
+        statusNode.className = `jap-status ${type}`;
+      } else {
+        statusNode.className = "jap-status";
+      }
+      if (!statusNode.contains(dot)) {
+        statusNode.insertBefore(dot, statusNode.firstChild);
+      }
+      statusNode.textContent = "";
+      statusNode.appendChild(dot);
+      statusNode.appendChild(document.createTextNode(String(text || "")));
     }
   }
 
@@ -1905,7 +1937,7 @@
   }
 
   async function runScan() {
-    setStatus("Scanning...");
+    setStatus("Scanning...", "loading");
     try {
       if (STATE.pendingRecord && STATE.pendingRecord.url !== window.location.href) {
         STATE.pendingRecord = null;
@@ -1917,7 +1949,7 @@
 
       const fields = extractFields();
       if (!fields.length) {
-        setStatus("No fields found");
+        setStatus("No fields found", "");
         return false;
       }
 
@@ -1937,7 +1969,7 @@
           STATE.alreadyApplied = checkResponse.payload.application;
           STATE.lastSuggestions = [];
           STATE.lastScanUrl = window.location.href;
-          setStatus("Already applied!");
+          setStatus("Already applied!", "success");
           showDuplicateWarning(checkResponse.payload.application);
           return false;
         }
@@ -1951,63 +1983,63 @@
         applicationContext,
       });
       if (!response || !response.ok) {
-        setStatus(`Error: ${response?.error || "failed"}`);
+        setStatus(`Error: ${response?.error || "failed"}`, "error");
         return false;
       }
       STATE.lastSuggestions = response.session?.suggestions || [];
       STATE.lastScanUrl = window.location.href;
       if (!STATE.lastSuggestions.length) {
-        setStatus(`Found ${fields.length} fields (no suggestions)`);
+        setStatus(`Found ${fields.length} fields (no suggestions)`, "");
         return true;
       }
 
       const suggestedCount = STATE.lastSuggestions.filter((item) => item && item.suggested).length;
-      setStatus(`Found ${fields.length} fields (${suggestedCount} ready)`);
+      setStatus(`Found ${fields.length} fields (${suggestedCount} ready)`, "success");
       return true;
     } catch (e) {
-      setStatus(`Error: ${e?.message || e}`);
+      setStatus(`Error: ${e?.message || e}`, "error");
       return false;
     }
   }
 
   async function runApply() {
     if (STATE.alreadyApplied) {
-      setStatus("Blocked: already applied");
+      setStatus("Blocked: already applied", "error");
       showDuplicateWarning(STATE.alreadyApplied);
       return;
     }
 
     if (STATE.lastScanUrl && STATE.lastScanUrl !== window.location.href) {
-      setStatus("Page changed, rescan required");
+      setStatus("Page changed, rescan required", "error");
       return;
     }
 
     if (!Array.isArray(STATE.lastSuggestions) || !STATE.lastSuggestions.length) {
-      setStatus("No suggestions yet (click Fill)");
+      setStatus("No suggestions yet (click Fill)", "");
       return;
     }
 
-    setStatus("Applying...");
+    setStatus("Applying...", "loading");
     try {
       const approvedItems = STATE.lastSuggestions.filter(
         (item) => item && item.suggested && hasMeaningfulValue(item.value),
       );
 
       if (!approvedItems.length) {
-        setStatus("No approved suggestions to apply");
+        setStatus("No approved suggestions to apply", "error");
         return;
       }
 
       const result = applyBatch(approvedItems);
       if (result.appliedCount <= 0) {
-        setStatus("Could not apply any fields");
+        setStatus("Could not apply any fields", "error");
         return;
       }
 
       queuePendingApplicationRecord();
-      setStatus(`Applied ${result.appliedCount} fields (submit form to record)`);
+      setStatus(`Applied ${result.appliedCount} fields (submit to record)`, "success");
     } catch (e) {
-      setStatus(`Error: ${e?.message || e}`);
+      setStatus(`Error: ${e?.message || e}`, "error");
     }
   }
 

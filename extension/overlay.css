@@ -1,23 +1,416 @@
+/* ============================================
+   Job Autofill Pro - Modern Overlay UI
+   ============================================ */
+
+/* CSS Custom Properties */
 .jap-overlay {
+  --jap-bg-primary: #0f0f23;
+  --jap-bg-secondary: #1a1a2e;
+  --jap-bg-tertiary: #252542;
+  --jap-bg-hover: #2d2d4a;
+  
+  --jap-accent-primary: #6366f1;
+  --jap-accent-hover: #818cf8;
+  --jap-accent-glow: rgba(99, 102, 241, 0.4);
+  
+  --jap-success: #10b981;
+  --jap-warning: #f59e0b;
+  --jap-danger: #ef4444;
+  --jap-danger-bg: rgba(239, 68, 68, 0.15);
+  
+  --jap-text-primary: #f1f5f9;
+  --jap-text-secondary: #94a3b8;
+  --jap-text-muted: #64748b;
+  
+  --jap-border: rgba(255, 255, 255, 0.08);
+  --jap-border-focus: rgba(99, 102, 241, 0.5);
+  
+  --jap-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  --jap-shadow-glow: 0 0 30px var(--jap-accent-glow);
+  
+  --jap-radius-sm: 6px;
+  --jap-radius-md: 10px;
+  --jap-radius-lg: 14px;
+  
+  --jap-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
   position: fixed !important;
-  bottom: 0 !important;
-  right: 20px !important;
-  width: 280px !important;
-  background: #1a1a2e !important;
-  border-radius: 12px 12px 0 0 !important;
-  box-shadow: 0 -4px 32px rgba(0,0,0,0.5) !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  bottom: 16px !important;
+  right: 16px !important;
+  width: 320px !important;
+  background: var(--jap-bg-primary) !important;
+  border: 1px solid var(--jap-border) !important;
+  border-radius: var(--jap-radius-lg) !important;
+  box-shadow: var(--jap-shadow) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-size: 13px !important;
-  color: #e8e8e8 !important;
+  color: var(--jap-text-primary) !important;
   z-index: 2147483647 !important;
+  overflow: hidden;
+  animation: japSlideUp 0.3s ease-out;
 }
-.jap-overlay.hidden { display: none !important; }
-.jap-header { display: flex; align-items: center; gap: 8px; padding: 10px; background: #16213e; border-radius: 12px 12px 0 0; }
-.jap-btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.jap-btn-primary { background: #4a4aff; color: #fff; }
-.jap-btn-ghost { background: transparent; color: #888; }
-.jap-btn-warning { background: #ff6b6b; color: #fff; }
-.jap-status { flex: 1; text-align: right; font-size: 12px; color: #888; }
-.jap-warning { padding: 10px; background: #2d1f1f; border-top: 1px solid #ff6b6b; font-size: 12px; color: #ff6b6b; display: flex; flex-direction: column; gap: 8px; }
-.jap-warning.hidden { display: none !important; }
-.jap-warning-meta { color: #ffc9c9; font-size: 11px; }
+
+@keyframes japSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.jap-overlay.hidden { 
+  display: none !important; 
+}
+
+/* Header */
+.jap-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--jap-bg-secondary) 0%, var(--jap-bg-tertiary) 100%);
+  border-bottom: 1px solid var(--jap-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.jap-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--jap-accent-primary), transparent);
+  opacity: 0.5;
+}
+
+.jap-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jap-logo-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--jap-accent-primary), #a855f7);
+  border-radius: var(--jap-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 2px 8px var(--jap-accent-glow);
+}
+
+.jap-logo-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jap-text-primary);
+  letter-spacing: -0.3px;
+}
+
+/* Buttons */
+.jap-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--jap-radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--jap-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.jap-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.jap-btn-primary {
+  background: linear-gradient(135deg, var(--jap-accent-primary), #7c3aed);
+  color: #fff;
+  box-shadow: 0 2px 12px var(--jap-accent-glow);
+}
+
+.jap-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--jap-accent-hover), #a855f7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px var(--jap-accent-glow);
+}
+
+.jap-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.jap-btn-ghost {
+  background: transparent;
+  color: var(--jap-text-secondary);
+  padding: 8px;
+}
+
+.jap-btn-ghost:hover:not(:disabled) {
+  background: var(--jap-bg-hover);
+  color: var(--jap-text-primary);
+}
+
+.jap-btn-danger {
+  background: linear-gradient(135deg, var(--jap-danger), #dc2626);
+  color: #fff;
+}
+
+.jap-btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f87171, var(--jap-danger));
+  transform: translateY(-1px);
+}
+
+/* Status */
+.jap-status-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.jap-status {
+  font-size: 12px;
+  color: var(--jap-text-secondary);
+  font-weight: 500;
+  transition: var(--jap-transition);
+}
+
+.jap-status.success {
+  color: var(--jap-success);
+}
+
+.jap-status.error {
+  color: var(--jap-danger);
+}
+
+.jap-status.loading {
+  color: var(--jap-accent-primary);
+}
+
+/* Status dots */
+.jap-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--jap-text-muted);
+  margin-right: 6px;
+  animation: none;
+}
+
+.jap-status.success .jap-status-dot {
+  background: var(--jap-success);
+  animation: japPulse 2s infinite;
+}
+
+.jap-status.error .jap-status-dot {
+  background: var(--jap-danger);
+}
+
+.jap-status.loading .jap-status-dot {
+  background: var(--jap-accent-primary);
+  animation: japPulse 1s infinite;
+}
+
+@keyframes japPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Warning / Duplicate Alert */
+.jap-warning {
+  padding: 14px;
+  background: var(--jap-danger-bg);
+  border-top: 1px solid rgba(239, 68, 68, 0.3);
+  font-size: 12px;
+  color: #fca5a5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: japFadeIn 0.2s ease-out;
+}
+
+@keyframes japFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.jap-warning.hidden { 
+  display: none !important; 
+}
+
+.jap-warning-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--jap-danger);
+}
+
+.jap-warning-icon {
+  font-size: 14px;
+}
+
+.jap-warning-text {
+  color: #fecaca;
+  line-height: 1.5;
+}
+
+.jap-warning-meta {
+  color: var(--jap-text-muted);
+  font-size: 11px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Button row in warning */
+.jap-warning-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.jap-warning-actions .jap-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* Stats bar */
+.jap-stats {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--jap-bg-secondary);
+  border-top: 1px solid var(--jap-border);
+}
+
+.jap-stat {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  background: var(--jap-bg-tertiary);
+  border-radius: var(--jap-radius-sm);
+  transition: var(--jap-transition);
+}
+
+.jap-stat:hover {
+  background: var(--jap-bg-hover);
+}
+
+.jap-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--jap-text-primary);
+}
+
+.jap-stat-label {
+  font-size: 10px;
+  color: var(--jap-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* Footer */
+.jap-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--jap-bg-secondary);
+  border-top: 1px solid var(--jap-border);
+  font-size: 11px;
+  color: var(--jap-text-muted);
+}
+
+.jap-footer-links {
+  display: flex;
+  gap: 12px;
+}
+
+.jap-footer-link {
+  color: var(--jap-text-secondary);
+  text-decoration: none;
+  transition: var(--jap-transition);
+}
+
+.jap-footer-link:hover {
+  color: var(--jap-accent-primary);
+}
+
+/* Loading spinner */
+.jap-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: japSpin 0.8s linear infinite;
+}
+
+@keyframes japSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Icon buttons */
+.jap-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--jap-text-secondary);
+  border-radius: var(--jap-radius-sm);
+  cursor: pointer;
+  transition: var(--jap-transition);
+  font-size: 16px;
+}
+
+.jap-icon-btn:hover {
+  background: var(--jap-bg-hover);
+  color: var(--jap-text-primary);
+}
+
+/* Keyboard shortcut hint */
+.jap-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--jap-bg-tertiary);
+  border: 1px solid var(--jap-border);
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--jap-text-muted);
+  font-family: monospace;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .jap-overlay {
+    width: calc(100vw - 32px) !important;
+    right: 16px !important;
+    left: 16px !important;
+    bottom: 16px !important;
+  }
+}
