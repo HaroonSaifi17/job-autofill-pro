@@ -53,10 +53,19 @@ Question: Do you have Web3 experience?
 Answer: Yes, I've worked on DeFi systems involving liquidity pools and optimized blockchain interactions using multicall, Wagmi, and Viem.
 
 Question: Are you authorized to work in this country?
-Answer: Yes.
+Answer: I am legally authorized to work in India. For international roles, I may require visa sponsorship.
 
 Question: Do you require visa sponsorship?
-Answer: No.
+Answer: I do not require sponsorship for roles in India. However, for roles outside of India (such as the US or Europe), I would require visa sponsorship.
+
+Question: Gender
+Answer: Male
+
+Question: Pronouns
+Answer: He/Him
+
+Question: Current Company
+Answer: N/A (Fresher)
 
 Notice period :: Immediate
 Preferred location :: Remote (preferred), NCR (Noida/Gurgaon)
@@ -71,3 +80,8 @@ TypeScript experience :: 3 years
 JavaScript experience :: 4 years
 AI LLM experience :: 1 year
 Total years experience :: 0 professional
+Current location :: Delhi, India
+Citizenship :: India
+Visa status :: None / Not applicable
+Sponsorship required :: Yes (for international roles)
+Current company :: N/A (Fresher)
