@@ -95,7 +95,7 @@
       return data;
     } catch (error) {
       if (error && error.name === "AbortError") {
-        throw new Error("Proxy request timed out after 20s");
+        throw new Error("Proxy request timed out after 30s");
       }
       if (error && (error.message.includes("Failed to fetch") || error.message.includes("NetworkError"))) {
         throw new Error(`Proxy not reachable at ${cfg.proxyBaseUrl}. Is the proxy server running?`);
