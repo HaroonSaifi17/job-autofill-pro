@@ -456,9 +456,9 @@
     
     let sibling = el.previousElementSibling;
     let depth = 0;
-    while (sibling && depth < 3) {
+    while (sibling && depth < 5) {
       const text = nodeText(sibling);
-      if (text && text.length > 5) {
+      if (text && text.length > 10) {
         return text;
       }
       sibling = sibling.previousElementSibling;
@@ -467,14 +467,15 @@
 
     
     let parent = el.parentElement;
-    if (parent) {
-      let parentSibling = parent.previousElementSibling;
-      if (parentSibling) {
-        const text = nodeText(parentSibling);
-        if (text && text.length > 5) {
-          return text;
-        }
+    let pDepth = 0;
+    while (parent && pDepth < 3) {
+      let ps = parent.previousElementSibling;
+      if (ps) {
+        const text = nodeText(ps);
+        if (text && text.length > 10) return text;
       }
+      parent = parent.parentElement;
+      pDepth += 1;
     }
 
     return "";
@@ -548,21 +549,35 @@
 
   function inferCompanyFromHost() {
     const host = normalizedHostname();
-    if (!host) {
-      return "";
+    const path = window.location.pathname;
+    
+    if (!host) return "";
+
+    if (host.includes("lever.co")) {
+      const parts = path.split("/").filter(Boolean);
+      if (parts.length > 0 && parts[0] !== "apply") {
+        return parts[0];
+      }
     }
 
-    if (host.endsWith(".greenhouse.io")) {
+    if (host.includes("greenhouse.io")) {
+      const parts = path.split("/").filter(Boolean);
+      if (parts.length > 0) {
+        const possibleCompany = parts[0];
+        if (possibleCompany !== "jobs" && possibleCompany !== "boards") {
+          return possibleCompany;
+        }
+        if (parts.length > 1) return parts[1];
+      }
       return host.replace(/\.greenhouse\.io$/, "").replace(/^boards\./, "");
     }
-    if (host.endsWith(".lever.co")) {
-      return host.replace(/\.lever\.co$/, "").replace(/^jobs\./, "");
-    }
-    if (host.endsWith(".ashbyhq.com")) {
-      return host.replace(/\.ashbyhq\.com$/, "").replace(/^jobs\./, "");
+
+    if (host.includes("ashbyhq.com")) {
+      const parts = path.split("/").filter(Boolean);
+      if (parts.length > 0) return parts[0];
     }
 
-    return "";
+    return host.split(".")[0];
   }
 
   function buildApplicationContext() {
@@ -572,12 +587,9 @@
       normalizeContextText(inferCompanyFromHost());
 
     const context = {};
-    if (title) {
-      context.title = title;
-    }
-    if (company) {
-      context.company = company;
-    }
+    if (title) context.title = title;
+    if (company) context.company = company;
+    context.url = window.location.href;
     return context;
   }
 
