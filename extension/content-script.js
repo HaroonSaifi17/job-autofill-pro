@@ -1833,7 +1833,8 @@
           type: "checkApplication",
           fields,
           applicationContext,
-        });
+        }).catch(() => null);
+
         if (checkResponse?.ok && checkResponse.payload?.alreadyApplied) {
           STATE.alreadyApplied = checkResponse.payload.application;
           STATE.lastSuggestions = [];
@@ -1850,7 +1851,10 @@
         type: "scanAndResolve",
         fields,
         applicationContext,
+      }).catch(err => {
+        return { ok: false, error: "Local proxy is not reachable. Please ensure 'npm run start:proxy' is running." };
       });
+
       if (!response || !response.ok) {
         setStatus(`Error: ${response?.error || "failed"}`, "error");
         return false;
