@@ -58,10 +58,40 @@ function escapeLatexText(value) {
 }
 
 function protectLatexFormatting(value) {
-  return escapeLatexText(value)
-    .replace(/\\textbackslash\{\}textbf\\\{([^{}]+)\\\}/g, "\\textbf{$1}")
-    .replace(/\\textbackslash\{\}href\\\{([^{}]+)\\\}\\\{([^{}]+)\\\}/g, "\\href{$1}{$2}")
-    .replace(/\\textbackslash\{\}hfill/g, "\\hfill");
+  const tags = [];
+  let temp = String(value || "");
+
+  temp = temp.replace(/\\textbf\{([^{}]*)\}/g, (match, inner) => {
+    tags.push(`\\textbf{${escapeLatexText(inner)}}`);
+    return `LATEXTAG${tags.length - 1}ENDTAG`;
+  });
+
+  temp = temp.replace(/\\href\{([^}]+)\}\{([^{}]*)\}/g, (match, url, text) => {
+    tags.push(`\\href{${url}}{${escapeLatexText(text)}}`);
+    return `LATEXTAG${tags.length - 1}ENDTAG`;
+  });
+
+  temp = temp.replace(/\\hfill/g, () => {
+    tags.push("\\hfill");
+    return `LATEXTAG${tags.length - 1}ENDTAG`;
+  });
+
+  temp = escapeLatexText(temp);
+
+  for (let i = tags.length - 1; i >= 0; i--) {
+    temp = temp.replace(`LATEXTAG${i}ENDTAG`, tags[i]);
+  }
+
+  return temp;
+}
+
+function cleanLatexForWordCount(text) {
+  let clean = String(text || "");
+  clean = clean.replace(/\\href\{[^{}]*\}\{/g, ""); // strip \href{url}{
+  clean = clean.replace(/\\[a-zA-Z]+\{/g, ""); // strip \textbf{, \emph{, etc.
+  clean = clean.replace(/\\[a-zA-Z]+/g, ""); // strip \hfill
+  clean = clean.replace(/\}/g, ""); // strip }
+  return clean;
 }
 
 function extractResumeItems(tex) {
@@ -97,7 +127,7 @@ function extractResumeItems(tex) {
     items.push({
       index: items.length,
       original,
-      wordCount: wordCount(original.replace(/\\[a-zA-Z]+\{|\}/g, "")),
+      wordCount: wordCount(cleanLatexForWordCount(original)),
       start,
       end: cursor,
     });
@@ -174,7 +204,8 @@ function normalizeRewrites(items, rawRewrites) {
       continue;
     }
 
-    const count = wordCount(text);
+    const cleanText = cleanLatexForWordCount(text);
+    const count = wordCount(cleanText);
     if (count !== item.wordCount && count !== item.wordCount - 1) {
       continue;
     }
